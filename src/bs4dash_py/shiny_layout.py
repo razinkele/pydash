@@ -97,8 +97,34 @@ def dashboard_page_shiny(
     return page
 
 
+def _normalize_badge(badge):
+    """Normalize badge input into (text, class) tuple.
+
+    Accepts either a string (badge text) or a dict with keys 'text' and
+    optional 'class' or 'color'. Returns (text, class_attr) or (None, None)
+    if badge is falsy.
+    """
+    if not badge:
+        return None, None
+    if isinstance(badge, str):
+        return badge, "badge badge-info"
+    if isinstance(badge, dict):
+        text = badge.get("text") or badge.get("badge")
+        cls = badge.get("class")
+        color = badge.get("color")
+        if not cls:
+            cls = f"badge badge-{color}" if color else "badge badge-info"
+        return text, cls
+    # Fallback
+    return str(badge), "badge badge-info"
+
+
 def navbar_item_shiny(title, href="#", badge=None, icon=None):
-    """Create a navbar item with optional badge and icon."""
+    """Create a navbar item with optional badge and icon.
+
+    - badge: either a string or a dict {text, class?, color?}. When provided,
+      an accessible `aria-label` is added to the badge element.
+    """
     children = []
     if icon:
         if isinstance(icon, str):
@@ -108,8 +134,14 @@ def navbar_item_shiny(title, href="#", badge=None, icon=None):
     children.append(title)
 
     a = ui.tags.a({"class": "nav-link", "href": href}, *children)
-    if badge:
-        a.append(ui.tags.span({"class": "badge badge-info ml-1"}, badge))
+    btext, bcls = _normalize_badge(badge)
+    if btext is not None:
+        # add aria-label for accessibility
+        a.append(
+            ui.tags.span(
+                {"class": bcls + " ml-1", "aria-label": f"{title} badge {btext}"}, btext
+            )
+        )
     return ui.tags.li({"class": "nav-item"}, a)
 
 
@@ -280,7 +312,7 @@ def menu_item_shiny(text, href="#", badge=None, active=False, icon=None):
 
     - text: link text
     - href: link href
-    - badge: optional badge text
+    - badge: optional badge text or dict {text, class?, color?}
     - active: whether to mark item active
     - icon: optional icon (string class or tag)
     """
@@ -296,9 +328,14 @@ def menu_item_shiny(text, href="#", badge=None, active=False, icon=None):
     children.append(text)
 
     a = ui.tags.a({"class": a_cls, "href": href}, *children)
-    if badge:
-        # Matches classes used by client handler
-        a.append(ui.tags.span({"class": "badge badge-info float-right"}, badge))
+
+    btext, bcls = _normalize_badge(badge)
+    if btext is not None:
+        # use float-right (sidebar) by default for placement and add aria label
+        cls = bcls + " float-right"
+        a.append(
+            ui.tags.span({"class": cls, "aria-label": f"{text} badge {btext}"}, btext)
+        )
     return ui.tags.li({"class": "nav-item"}, a)
 
 
