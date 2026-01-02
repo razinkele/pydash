@@ -1,0 +1,18 @@
+# Map file path globs to labels
+# When files matching a pattern are present in a PR, the corresponding label will be applied.
+"docs/**":
+  - "docs"
+"CHANGELOG.md":
+  - "docs"
+"tests/**":
+  - "test"
+"examples/**":
+  - "docs"
+".github/**":
+  - "ci"
+"*.yml":
+  - "ci"
+"*.yaml":
+  - "ci"
+"src/**":
+  - "refactor"
