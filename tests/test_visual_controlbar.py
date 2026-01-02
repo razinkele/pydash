@@ -1,9 +1,10 @@
 def test_visual_controlbar_asset_and_show_hide():
     import os
-    import sys
-    import subprocess
     import socket
+    import subprocess
+    import sys
     import time
+
     import pytest
 
     pytest.importorskip("playwright.sync_api")

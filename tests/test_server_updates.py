@@ -19,8 +19,9 @@ def test_update_sidebar_uses_session_send_methods():
 
 
 def test_async_send_methods_are_awaited():
-    from bs4dash_py.server import update_sidebar
     import asyncio
+
+    from bs4dash_py.server import update_sidebar
 
     class SAsync:
         def __init__(self):
@@ -136,10 +137,11 @@ def test_running_loop_schedules_coroutine(monkeypatch):
     background thread. The test asserts the coroutine was scheduled and
     eventually executed.
     """
-    from bs4dash_py.server import update_sidebar
     import asyncio
     import threading
     import time
+
+    from bs4dash_py.server import update_sidebar
 
     class SAsync:
         def __init__(self):
@@ -195,10 +197,11 @@ def test_real_running_loop_schedules_coroutine(monkeypatch):
     """Start a real asyncio loop in a background thread and ensure the
     coroutine is scheduled on that loop using `run_coroutine_threadsafe`.
     """
-    from bs4dash_py.server import update_sidebar
     import asyncio
     import threading
     import time
+
+    from bs4dash_py.server import update_sidebar
 
     class SAsync:
         def __init__(self):

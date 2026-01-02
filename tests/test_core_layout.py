@@ -2,6 +2,7 @@ def test_core_layout_shiny():
     import importlib
     import os
     import sys
+
     import pytest
 
     pytest.importorskip("shiny")

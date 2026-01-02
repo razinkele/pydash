@@ -2,7 +2,7 @@ def test_value_and_info_boxes_html():
     import pytest
 
     pytest.importorskip("shiny")
-    from bs4dash_py import value_box_shiny, info_box_shiny
+    from bs4dash_py import info_box_shiny, value_box_shiny
 
     v = value_box_shiny("42", title="Count", icon=None, color="primary", width=3)
     assert "small-box" in str(v)

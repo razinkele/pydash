@@ -42,7 +42,7 @@ jobs:
           path: |
             docs/images/**
 
-      - name: Optional: Commit images to main (requires PAT)
-        if: ${{ secrets.GALLERY_PUSH_TOKEN != '' }}
+      - name: "Optional: Commit images to main (requires PAT)"
+        if: '${{ secrets.GALLERY_PUSH_TOKEN }}'
         run: |
           echo "GALLERY_PUSH_TOKEN provided but commit step is currently simplified in CI. If you want CI to push images, replace this placeholder with the commit logic or set up the PAT and re-enable the step."

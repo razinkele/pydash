@@ -2,6 +2,7 @@ def test_shiny_layout_import():
     import importlib
     import os
     import sys
+
     import pytest
 
     # Skip this test if Shiny is not installed in the environment

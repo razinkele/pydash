@@ -50,7 +50,7 @@
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
-            }catch(e){console.error(e);} 
+            }catch(e){console.error(e);}
         });
 
         // Update sidebar badges: payload {badges: [{href: '#about', badge: '3'}]}
@@ -79,7 +79,7 @@
                         existing.textContent = b.badge;
                     }
                 });
-            }catch(e){console.error(e);} 
+            }catch(e){console.error(e);}
         });
 
         // Update nav items (replace) with optional badges: payload {nav_id: 'demo', items: [{title, href, badge}]}
@@ -107,7 +107,7 @@
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
-            }catch(e){console.error(e);} 
+            }catch(e){console.error(e);}
         });
 
         // Update tab content: payload {tab_id: 't1', content: '<p>…</p>'}
@@ -116,7 +116,7 @@
                 var el = document.getElementById(msg.tab_id);
                 if(!el) return;
                 el.innerHTML = msg.content || '';
-            }catch(e){console.error(e);} 
+            }catch(e){console.error(e);}
         });
     }
 })();

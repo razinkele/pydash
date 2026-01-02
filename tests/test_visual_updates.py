@@ -1,9 +1,10 @@
 def test_visual_updates_sidebar_nav_and_tab():
     import os
-    import sys
-    import subprocess
     import socket
+    import subprocess
+    import sys
     import time
+
     import pytest
 
     pytest.importorskip("playwright.sync_api")
