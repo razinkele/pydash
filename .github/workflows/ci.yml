@@ -18,13 +18,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
-      - name: Ensure python3.10 for pre-commit
+      - name: Skip python3.10 install (not needed on ubuntu-latest)
         if: ${{ matrix.python-version == '3.11' }}
         run: |
-          if ! command -v python3.10 >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y python3.10 python3.10-venv
-          fi
+          echo "Skipping python3.10 install; pre-commit will run with the configured Python (3.11)."
       - name: Run pre-commit
         if: ${{ matrix.python-version == '3.11' }}
         run: pre-commit run --all-files
