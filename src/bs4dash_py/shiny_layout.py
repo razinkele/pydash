@@ -29,27 +29,29 @@ def dashboard_page_shiny(
         footer or ui.tags.footer({"class": "main-footer"}),
     ]
 
-    # Minimal inline JS to handle controlbar messages from the server.
-    # This keeps the MVP light-weight (no build step) while enabling server-driven
-    # open/close behavior. It listens for a Shiny custom message called
-    # 'bs4dash_controlbar' with payload {action: 'show'|'hide'|'toggle'}.
-    controlbar_js = ui.tags.script(
-        """
-        (function(){
-            function handle(msg){
-                var action = msg && msg.action ? msg.action : 'toggle';
-                var body = document.body;
-                if(!body) return;
-                if(action === 'show') body.classList.add('control-sidebar-open');
-                else if(action === 'hide') body.classList.remove('control-sidebar-open');
-                else body.classList.toggle('control-sidebar-open');
-            }
-            if(window.Shiny && Shiny.addCustomMessageHandler){
-                Shiny.addCustomMessageHandler('bs4dash_controlbar', handle);
-            }
-        })();
-        """
-    )
+    # Prefer an external asset when possible: attempt to use `ui.include_js` to
+    # include the packaged asset `bs4dash_py/assets/bs4dash_controlbar.js`.
+    # Fall back to inlining the script if the host Shiny doesn't support
+    # `ui.include_js` (ensures backward compatibility across py-shiny versions).
+    if hasattr(ui, "include_js"):
+        controlbar_asset = ui.include_js("bs4dash_py/assets/bs4dash_controlbar.js")
+    else:
+        # fallback: inline the file content so behavior remains available
+        controlbar_asset = ui.tags.script(
+            "(function(){\n"
+            "    function handle(msg){\n"
+            "        var action = msg && msg.action ? msg.action : 'toggle';\n"
+            "        var body = document.body;\n"
+            "        if(!body) return;\n"
+            "        if(action === 'show') body.classList.add('control-sidebar-open');\n"
+            "        else if(action === 'hide') body.classList.remove('control-sidebar-open');\n"
+            "        else body.classList.toggle('control-sidebar-open');\n"
+            "    }\n"
+            "    if(window.Shiny && Shiny.addCustomMessageHandler){\n"
+            "        Shiny.addCustomMessageHandler('bs4dash_controlbar', handle);\n"
+            "    }\n"
+            "})();"
+        )
 
     page = ui.tags.div(
         *head_links,
@@ -57,7 +59,7 @@ def dashboard_page_shiny(
             {"class": "wrapper"}, *[c for c in wrapper_children if c is not None]
         ),
         ui.tags.script(src=adminlte_js) if adminlte_js else None,
-        controlbar_js,
+        controlbar_asset,
     )
     return page
 
