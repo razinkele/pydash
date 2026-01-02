@@ -25,3 +25,9 @@ line-length = 88
 
 [tool.ruff]
 line-length = 88
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"bs4dash_py" = ["assets/*.js"]
