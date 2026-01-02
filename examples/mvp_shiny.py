@@ -6,13 +6,16 @@ from bs4dash_py import (
     navbar_shiny,
     sidebar_shiny,
     footer_shiny,
+    controlbar_shiny,
 )
 
 # CDNs
 ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
 ADMINLTE_JS = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"
 
-hdr = navbar_shiny("bs4dash-py Shiny MVP")
+hdr = navbar_shiny(
+    "bs4dash-py Shiny MVP", controlbar_icon=ui.tags.i({"class": "fas fa-th"})
+)
 side = sidebar_shiny(brand_title="MVP", menu=[("Home", "#"), ("About", "#about")])
 
 content = ui.tags.div(
@@ -33,10 +36,15 @@ ftr = footer_shiny(
     right=ui.tags.div(ui.tags.a({"href": "#"}, "Contact")),
 )
 
+control = controlbar_shiny(
+    ui.tags.div({"class": "p-3"}, ui.tags.h5("Controlbar"), ui.tags.p("Some settings"))
+)
+
 page = dashboard_page_shiny(
     header=hdr,
     sidebar=side,
     body=content,
+    controlbar=control,
     footer=ftr,
     adminlte_css=ADMINLTE,
     adminlte_js=ADMINLTE_JS,
