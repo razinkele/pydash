@@ -1,6 +1,8 @@
 # bs4dash-py (MVP)
 
-[![CI](https://github.com/razinkele/pydash/actions/workflows/ci.yml/badge.svg)](https://github.com/razinkele/pydash/actions/workflows/ci.yml) [Distributions (Artifacts)](https://github.com/razinkele/pydash/actions?query=workflow%3ACI)
+[![CI](https://github.com/razinkele/pydash/actions/workflows/ci.yml/badge.svg)](https://github.com/razinkele/pydash/actions/workflows/ci.yml) [Distributions (Artifacts)](https://github.com/razinkele/pydash/actions?query=workflow%3ACI) [![PyPI](https://img.shields.io/pypi/v/bs4dash-py.svg)](https://pypi.org/project/bs4dash-py/)
+
+> Note: The PyPI badge will show the latest published version once `bs4dash-py` has been released to PyPI.
 
 Minimal MVP to provide AdminLTE3/Bootstrap4-style dashboard building blocks for Shiny for Python.
 
