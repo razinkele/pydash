@@ -67,8 +67,20 @@ app_ui = ui.page_fixed(page)
 
 
 def server(input, output, session):
-    # placeholder server for MVP
-    return
+    # Server handlers to demonstrate show/hide controlbar actions
+    from shiny import reactive
+    from bs4dash_py import show_controlbar, hide_controlbar
+
+    @reactive.Effect
+    def _show_cb_handler():
+        # input.show_cb() is truthy on button click (increments)
+        if input.show_cb():
+            show_controlbar(session)
+
+    @reactive.Effect
+    def _hide_cb_handler():
+        if input.hide_cb():
+            hide_controlbar(session)
 
 
 app = App(app_ui, server)
