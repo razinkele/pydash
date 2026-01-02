@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bs4dash-py"
+version = "0.0.1"
+description = "MVP: AdminLTE3-like dashboard helpers for Shiny for Python"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["dash>=2.6.0"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pre-commit",
+  "black",
+  "ruff",
+  "isort",
+  "flake8",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
