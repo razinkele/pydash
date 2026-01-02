@@ -10,3 +10,5 @@ Quick start
 Contributing
 
 - See `CONTRIBUTING.md` for development setup, running tests and hooks.
+
+Draft PR: scaffold and CI added
