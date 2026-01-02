@@ -20,6 +20,7 @@ hdr = navbar_shiny(
     "bs4dash-py Shiny MVP",
     controlbar_icon=ui.tags.i({"class": "fas fa-th"}),
     right_ui=[
+        {"title": "Notifications", "href": "#notif", "badge": "2"},
         {
             "type": "user",
             "title": "Alice",
