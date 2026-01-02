@@ -57,7 +57,9 @@ def create_thumbnail(image_path: Path, thumb_dir: Path, max_width: int = 600):
     try:
         from PIL import Image
     except Exception as e:
-        raise ImportError("Pillow is required to create thumbnails. Install with 'pip install Pillow'.") from e
+        raise ImportError(
+            "Pillow is required to create thumbnails. Install with 'pip install Pillow'."
+        ) from e
 
     thumb_dir.mkdir(parents=True, exist_ok=True)
     with Image.open(image_path) as im:
@@ -79,7 +81,10 @@ def capture_one(example_path: Path, out_dir: Path, port: int):
     env["PYBS4DASH_PORT"] = str(port)
 
     proc = subprocess.Popen(
-        [sys.executable, str(example_path)], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        [sys.executable, str(example_path)],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
     try:
@@ -89,7 +94,9 @@ def capture_one(example_path: Path, out_dir: Path, port: int):
             from playwright.sync_api import sync_playwright
         except Exception as e:
             proc.terminate()
-            raise RuntimeError("Playwright is required to capture screenshots. Install with 'pip install playwright' and run 'playwright install'.") from e
+            raise RuntimeError(
+                "Playwright is required to capture screenshots. Install with 'pip install playwright' and run 'playwright install'."
+            ) from e
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -125,9 +132,17 @@ def capture_one(example_path: Path, out_dir: Path, port: int):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--examples", nargs="+", required=True, help="Example scripts to capture")
-    p.add_argument("--out", default="docs/images", help="Output directory for screenshots")
-    p.add_argument("--port", type=int, help="Optional fixed port to use (otherwise uses a free port per example)")
+    p.add_argument(
+        "--examples", nargs="+", required=True, help="Example scripts to capture"
+    )
+    p.add_argument(
+        "--out", default="docs/images", help="Output directory for screenshots"
+    )
+    p.add_argument(
+        "--port",
+        type=int,
+        help="Optional fixed port to use (otherwise uses a free port per example)",
+    )
     args = p.parse_args()
 
     out_dir = Path(args.out)

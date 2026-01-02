@@ -20,8 +20,17 @@ hdr = navbar_shiny(
     "bs4dash-py Shiny MVP",
     controlbar_icon=ui.tags.i({"class": "fas fa-th"}),
     right_ui=[
-        {"type": "user", "title": "Alice", "image": "https://via.placeholder.com/32", "items": [("Profile", "#profile"), ("Logout", "#logout")] },
-        {"type": "user", "title": "Bob Jones", "items": [("Profile", "#profile"), ("Logout", "#logout")] },
+        {
+            "type": "user",
+            "title": "Alice",
+            "image": "https://via.placeholder.com/32",
+            "items": [("Profile", "#profile"), ("Logout", "#logout")],
+        },
+        {
+            "type": "user",
+            "title": "Bob Jones",
+            "items": [("Profile", "#profile"), ("Logout", "#logout")],
+        },
     ],
 )
 side = sidebar_shiny(
@@ -70,7 +79,11 @@ content = ui.tags.div(
         {"class": "row mt-3"},
         ui.tags.div(
             {"class": "col-12"},
-            tabs_shiny("example-tabs", ("t1", "Tab 1", ui.tags.p("Tab1 content"), True), ("t2", "Tab 2", ui.tags.p("Tab2 content"))),
+            tabs_shiny(
+                "example-tabs",
+                ("t1", "Tab 1", ui.tags.p("Tab1 content"), True),
+                ("t2", "Tab 2", ui.tags.p("Tab2 content")),
+            ),
         ),
     ),
     ui.tags.hr(),
@@ -85,7 +98,13 @@ content = ui.tags.div(
             # Demo navbar to be updated
             ui.tags.div(
                 {"id": "demo-navbar", "class": "mt-3"},
-                ui.tags.ul({"class": "nav"}, ui.tags.li({"class": "nav-item"}, ui.tags.a({"class": "nav-link", "href": "#a"}, "Initial"))),
+                ui.tags.ul(
+                    {"class": "nav"},
+                    ui.tags.li(
+                        {"class": "nav-item"},
+                        ui.tags.a({"class": "nav-link", "href": "#a"}, "Initial"),
+                    ),
+                ),
             ),
         ),
     ),
@@ -156,7 +175,9 @@ def server(input, output, session):
     @reactive.Effect
     def _update_tab_content():
         if input.bs_update_tab_content():
-            update_tab_content(session, "t1", "<p><strong>Updated from server</strong></p>")
+            update_tab_content(
+                session, "t1", "<p><strong>Updated from server</strong></p>"
+            )
 
 
 app = App(app_ui, server)

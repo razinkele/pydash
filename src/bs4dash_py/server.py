@@ -67,7 +67,10 @@ def _send_custom_message(session: Any, name: str, payload: dict) -> bool:
                     try:
                         import threading
 
-                        if getattr(loop, "_thread_id", None) is not None and getattr(loop, "_thread_id") != threading.get_ident():
+                        if (
+                            getattr(loop, "_thread_id", None) is not None
+                            and getattr(loop, "_thread_id") != threading.get_ident()
+                        ):
                             asyncio.run_coroutine_threadsafe(res, loop)
                             return
                     except Exception:
@@ -156,8 +159,6 @@ def toggle_controlbar(session: Any) -> bool:
     return _send_controlbar_message(session, "toggle")
 
 
-
-
 def update_sidebar_badges(session: Any, badges: list[dict]) -> bool:
     """Update badges for sidebar links.
 
@@ -185,4 +186,3 @@ def update_tab_content(session: Any, tab_id: str, content: str) -> bool:
     """
     payload = {"tab_id": tab_id, "content": content}
     return _send_custom_message(session, "bs4dash_update_tab_content", payload)
-

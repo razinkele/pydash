@@ -56,23 +56,46 @@ def test_visual_controlbar_asset_and_show_hide():
 
                 # Ensure the controlbar script is present (either external or inlined)
                 try:
-                    has_script = page.evaluate("() => !!document.querySelector(\"script[src*='bs4dash_controlbar.js']\") || Array.from(document.scripts).some(s=>s.textContent && s.textContent.includes('bs4dash_controlbar'))")
+                    has_script = page.evaluate(
+                        "() => !!document.querySelector(\"script[src*='bs4dash_controlbar.js']\") || Array.from(document.scripts).some(s=>s.textContent && s.textContent.includes('bs4dash_controlbar'))"
+                    )
                     assert has_script
                 except Exception:
                     pytest.fail("bs4dash_controlbar.js was not included on the page")
 
                 # Initially controlbar should not be open
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is False
+                assert (
+                    page.evaluate(
+                        "() => document.body.classList.contains('control-sidebar-open')"
+                    )
+                    is False
+                )
 
                 # Click the show button and wait for class
                 page.click("#show_cb")
-                page.wait_for_function("() => document.body.classList.contains('control-sidebar-open')", timeout=5000)
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is True
+                page.wait_for_function(
+                    "() => document.body.classList.contains('control-sidebar-open')",
+                    timeout=5000,
+                )
+                assert (
+                    page.evaluate(
+                        "() => document.body.classList.contains('control-sidebar-open')"
+                    )
+                    is True
+                )
 
                 # Click hide button and wait for removal
                 page.click("#hide_cb")
-                page.wait_for_function("() => !document.body.classList.contains('control-sidebar-open')", timeout=5000)
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is False
+                page.wait_for_function(
+                    "() => !document.body.classList.contains('control-sidebar-open')",
+                    timeout=5000,
+                )
+                assert (
+                    page.evaluate(
+                        "() => document.body.classList.contains('control-sidebar-open')"
+                    )
+                    is False
+                )
 
                 browser.close()
         except Exception as e:

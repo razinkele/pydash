@@ -27,7 +27,9 @@ def _is_release_context():
 def test_changelog_has_release_section_for_tag_or_is_present():
     # Only enforce on main or tag pushes (release validation contexts)
     if not _is_release_context():
-        pytest.skip("Not running in release-validation context; skipping CHANGELOG presence check")
+        pytest.skip(
+            "Not running in release-validation context; skipping CHANGELOG presence check"
+        )
 
     # Ensure CHANGELOG.md exists and is non-empty
     changelog = Path("CHANGELOG.md")
@@ -45,16 +47,20 @@ def test_changelog_has_release_section_for_tag_or_is_present():
 
     if tag:
         # Accept headings like '## vX.Y.Z' or '## X.Y.Z'
-        pattern = re.compile(rf"^##\s+v?{re.escape(tag.lstrip('v'))}", re.IGNORECASE | re.MULTILINE)
-        assert pattern.search(content), (
-            f"CHANGELOG.md does not contain a section for tag '{tag}'. Add a '## {tag}' section."
+        pattern = re.compile(
+            rf"^##\s+v?{re.escape(tag.lstrip('v'))}", re.IGNORECASE | re.MULTILINE
         )
+        assert pattern.search(
+            content
+        ), f"CHANGELOG.md does not contain a section for tag '{tag}'. Add a '## {tag}' section."
 
 
 def test_commits_since_last_tag_follow_conventional_commits():
     # Only enforce conventional commits in release-validation contexts (main or tag pushes)
     if not _is_release_context():
-        pytest.skip("Not running in release-validation context; skipping conventional commit checks")
+        pytest.skip(
+            "Not running in release-validation context; skipping conventional commit checks"
+        )
 
     # Skip if git not available
     if not _run_git(["git", "rev-parse", "--git-dir"]):
@@ -74,11 +80,15 @@ def test_commits_since_last_tag_follow_conventional_commits():
 
     subjects = [s.strip() for s in log.splitlines() if s.strip()]
     # Conventional commit regex (simple): type(scope)?: description
-    cc_re = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([^)]+\))?:\s+.+", re.IGNORECASE)
+    cc_re = re.compile(
+        r"^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([^)]+\))?:\s+.+",
+        re.IGNORECASE,
+    )
 
     bad = [s for s in subjects if not cc_re.match(s)]
     if bad:
         bad_preview = "\n".join(bad[:10])
         pytest.fail(
-            "Found commit messages that do not follow Conventional Commits spec:\n" + bad_preview
+            "Found commit messages that do not follow Conventional Commits spec:\n"
+            + bad_preview
         )

@@ -44,4 +44,6 @@ def test_release_tags_are_annotated():
         )
 
     if empty_messages:
-        pytest.fail("Found annotated tags with empty messages: " + ", ".join(empty_messages))
+        pytest.fail(
+            "Found annotated tags with empty messages: " + ", ".join(empty_messages)
+        )
