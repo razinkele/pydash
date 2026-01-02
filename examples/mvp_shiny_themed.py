@@ -21,8 +21,11 @@ css_path = Path(__file__).parent / "assets" / "custom_theme.css"
 custom_css = css_path.read_text() if css_path.exists() else ""
 
 hdr = navbar_shiny(
-    "bs4dash-py Themed MVP", controlbar_icon=ui.tags.i({"class": "fas fa-th"}),
-    right_ui=[{"type": "user", "title": "Themed User", "items": [("Profile", "#profile")]}],
+    "bs4dash-py Themed MVP",
+    controlbar_icon=ui.tags.i({"class": "fas fa-th"}),
+    right_ui=[
+        {"type": "user", "title": "Themed User", "items": [("Profile", "#profile")]}
+    ],
 )
 side = sidebar_shiny(
     brand_title="MVP Themed",
@@ -40,8 +43,12 @@ content = ui.tags.div(
     {"class": "container-fluid pt-3"},
     ui.tags.div(
         {"class": "row"},
-        box_shiny(ui.tags.p("Hello from themed box"), title="Box 1", status="primary", width=6),
-        box_shiny(ui.tags.p("Another themed box"), title="Box 2", status="success", width=6),
+        box_shiny(
+            ui.tags.p("Hello from themed box"), title="Box 1", status="primary", width=6
+        ),
+        box_shiny(
+            ui.tags.p("Another themed box"), title="Box 2", status="success", width=6
+        ),
     ),
     ui.tags.hr(),
     ui.tags.div(
@@ -67,7 +74,9 @@ ftr = footer_shiny(
     right=ui.tags.div(ui.tags.a({"href": "#"}, "Contact")),
 )
 
-control = controlbar_shiny(ui.tags.div({"class": "p-3"}, ui.tags.h5("Controlbar"), ui.tags.p("Some settings")))
+control = controlbar_shiny(
+    ui.tags.div({"class": "p-3"}, ui.tags.h5("Controlbar"), ui.tags.p("Some settings"))
+)
 
 # Inject custom CSS into the page head so it overrides defaults
 style_tag = ui.tags.style(custom_css) if custom_css else None

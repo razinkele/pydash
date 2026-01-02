@@ -1,5 +1,6 @@
 def test_menu_item_renders_badge_and_link():
     import pytest
+
     pytest.importorskip("shiny")
     from bs4dash_py import menu_item_shiny
 
@@ -12,6 +13,7 @@ def test_menu_item_renders_badge_and_link():
 
 def test_sidebar_accepts_dict_and_group():
     import pytest
+
     pytest.importorskip("shiny")
     from bs4dash_py import sidebar_shiny
 
@@ -30,6 +32,7 @@ def test_sidebar_accepts_dict_and_group():
 
 def test_navbar_item_and_breadcrumb():
     import pytest
+
     pytest.importorskip("shiny")
     from bs4dash_py import navbar_item_shiny, breadcrumb_shiny, navbar_user_menu_shiny
 
@@ -39,14 +42,20 @@ def test_navbar_item_and_breadcrumb():
     assert "badge" in s
     assert "fas fa-bell" in s
 
-    um = navbar_user_menu_shiny("Alice", image="/img/alice.png", dropdown_items=[("Profile", "#profile"), ("Logout", "#logout")])
+    um = navbar_user_menu_shiny(
+        "Alice",
+        image="/img/alice.png",
+        dropdown_items=[("Profile", "#profile"), ("Logout", "#logout")],
+    )
     us = str(um)
     assert "dropdown" in us
     assert "Profile" in us
     assert "/img/alice.png" in us
 
     # fallback initials avatar when no image
-    um2 = navbar_user_menu_shiny("Bob Jones", image=None, dropdown_items=[("Profile", "#")])
+    um2 = navbar_user_menu_shiny(
+        "Bob Jones", image=None, dropdown_items=[("Profile", "#")]
+    )
     s2 = str(um2)
     assert "BJ" in s2
     assert "user-avatar-initials" in s2
@@ -60,6 +69,7 @@ def test_navbar_item_and_breadcrumb():
 
 def test_sidebar_header_and_divider_and_icons():
     import pytest
+
     pytest.importorskip("shiny")
     from bs4dash_py import sidebar_header_shiny, sidebar_divider_shiny, menu_item_shiny
 

@@ -152,7 +152,6 @@ def test_running_loop_schedules_coroutine(monkeypatch):
             self.called = True
             self.args = (name, payload)
 
-    
     class FakeLoop:
         def __init__(self):
             self.scheduled = False

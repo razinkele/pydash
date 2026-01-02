@@ -83,7 +83,8 @@ def dashboard_page_shiny(
     # fallback style stub if no asset available
     if style_asset is None:
         style_asset = ui.tags.style(
-            ".user-avatar-initials{display:inline-block;border-radius:50%;font-weight:600;background:#6c757d;color:#fff;text-align:center}.user-avatar-initials.avatar-md{width:32px;height:32px;line-height:32px}")
+            ".user-avatar-initials{display:inline-block;border-radius:50%;font-weight:600;background:#6c757d;color:#fff;text-align:center}.user-avatar-initials.avatar-md{width:32px;height:32px;line-height:32px}"
+        )
 
     page = ui.tags.div(
         *head_links,
@@ -154,7 +155,9 @@ def navbar_user_menu_shiny(name, image=None, dropdown_items=None, id="user-menu"
     if image:
         if isinstance(image, str):
             toggle_children.append(
-                ui.tags.img({"src": image, "class": "img-circle elevation-2", "alt": name})
+                ui.tags.img(
+                    {"src": image, "class": "img-circle elevation-2", "alt": name}
+                )
             )
         else:
             toggle_children.append(image)
@@ -186,7 +189,9 @@ def navbar_user_menu_shiny(name, image=None, dropdown_items=None, id="user-menu"
         for it in dropdown_items:
             if isinstance(it, tuple):
                 title, href = it
-                menu_children.append(ui.tags.a({"class": "dropdown-item", "href": href}, title))
+                menu_children.append(
+                    ui.tags.a({"class": "dropdown-item", "href": href}, title)
+                )
             else:
                 menu_children.append(it)
     else:
@@ -207,15 +212,26 @@ def navbar_shiny(
     """
     # normalize right_ui entries: allow dicts to specify title/href/badge
     processed = []
-    for it in (right_ui or []):
+    for it in right_ui or []:
         if isinstance(it, dict):
             # Accept user_menu dict shortcut
             if it.get("type") == "user":
                 processed.append(
-                    navbar_user_menu_shiny(it.get("title", ""), image=it.get("image"), dropdown_items=it.get("items"))
+                    navbar_user_menu_shiny(
+                        it.get("title", ""),
+                        image=it.get("image"),
+                        dropdown_items=it.get("items"),
+                    )
                 )
             else:
-                processed.append(navbar_item_shiny(it.get("title", ""), it.get("href", "#"), it.get("badge"), it.get("icon")))
+                processed.append(
+                    navbar_item_shiny(
+                        it.get("title", ""),
+                        it.get("href", "#"),
+                        it.get("badge"),
+                        it.get("icon"),
+                    )
+                )
         else:
             processed.append(it)
 
@@ -412,13 +428,21 @@ def value_box_shiny(value, title=None, icon=None, color=None, width=3, href=None
     if color:
         cl += f" bg-{color}"
 
-    footer = ui.tags.a({"class": "small-box-footer", "href": href}, "More info") if href else None
+    footer = (
+        ui.tags.a({"class": "small-box-footer", "href": href}, "More info")
+        if href
+        else None
+    )
 
     return ui.tags.div(
         {"class": f"col-{width}"},
         ui.tags.div(
             {"class": cl},
-            ui.tags.div({"class": "inner"}, ui.tags.h3(value), ui.tags.p(title) if title else None),
+            ui.tags.div(
+                {"class": "inner"},
+                ui.tags.h3(value),
+                ui.tags.p(title) if title else None,
+            ),
             ui.tags.div({"class": "icon"}, icon) if icon else None,
             footer,
         ),
@@ -435,9 +459,17 @@ def info_box_shiny(title, value, icon=None, color=None, width=12):
     """
     cl = "info-box"
 
-    icon_tag = ui.tags.span({"class": f"info-box-icon bg-{color}"}, icon) if icon else None
-    content = ui.tags.div({"class": "info-box-content"}, ui.tags.span({"class": "info-box-text"}, title), ui.tags.span({"class": "info-box-number"}, value))
-    return ui.tags.div({"class": f"col-{width}"}, ui.tags.div({"class": cl}, icon_tag, content))
+    icon_tag = (
+        ui.tags.span({"class": f"info-box-icon bg-{color}"}, icon) if icon else None
+    )
+    content = ui.tags.div(
+        {"class": "info-box-content"},
+        ui.tags.span({"class": "info-box-text"}, title),
+        ui.tags.span({"class": "info-box-number"}, value),
+    )
+    return ui.tags.div(
+        {"class": f"col-{width}"}, ui.tags.div({"class": cl}, icon_tag, content)
+    )
 
 
 def tabs_shiny(id, *tabs, nav_class="nav nav-tabs", content_class="tab-content"):
@@ -453,10 +485,21 @@ def tabs_shiny(id, *tabs, nav_class="nav nav-tabs", content_class="tab-content")
         active = tab[3] if len(tab) > 3 else False
         a_cls = "nav-link active" if active else "nav-link"
         pane_cls = "tab-pane active" if active else "tab-pane"
-        nav_items.append(ui.tags.li({"class": "nav-item"}, ui.tags.a({"class": a_cls, "data-toggle": "tab", "href": f"#{tab_id}"}, title)))
+        nav_items.append(
+            ui.tags.li(
+                {"class": "nav-item"},
+                ui.tags.a(
+                    {"class": a_cls, "data-toggle": "tab", "href": f"#{tab_id}"}, title
+                ),
+            )
+        )
         panes.append(ui.tags.div({"class": pane_cls, "id": tab_id}, content))
 
-    return ui.tags.div({"id": id}, ui.tags.ul({"class": nav_class}, *nav_items), ui.tags.div({"class": content_class}, *panes))
+    return ui.tags.div(
+        {"id": id},
+        ui.tags.ul({"class": nav_class}, *nav_items),
+        ui.tags.div({"class": content_class}, *panes),
+    )
 
 
 def tab_item_shiny(tab_id, content, active=False):
@@ -471,7 +514,11 @@ def breadcrumb_shiny(*items):
     for it in items:
         if isinstance(it, tuple):
             title, href = it
-            parts.append(ui.tags.li({"class": "breadcrumb-item"}, ui.tags.a({"href": href}, title)))
+            parts.append(
+                ui.tags.li(
+                    {"class": "breadcrumb-item"}, ui.tags.a({"href": href}, title)
+                )
+            )
         else:
             parts.append(ui.tags.li({"class": "breadcrumb-item active"}, it))
     return ui.tags.ol({"class": "breadcrumb"}, *parts)
