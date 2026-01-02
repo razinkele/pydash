@@ -1,11 +1,7 @@
 import types
 
-from bs4dash_py.server import (
-    _send_controlbar_message,
-    hide_controlbar,
-    show_controlbar,
-    toggle_controlbar,
-)
+from bs4dash_py.server import (_send_controlbar_message, hide_controlbar,
+                               show_controlbar, toggle_controlbar)
 
 
 class DummySession:
