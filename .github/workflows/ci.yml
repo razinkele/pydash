@@ -44,11 +44,19 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
       - name: Install
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
           pip install playwright
+          # Playwright will use the cached browser downloads when available
           playwright install --with-deps
       - name: Run Playwright visual tests
         run: pytest -q tests/test_visual_*.py -q
