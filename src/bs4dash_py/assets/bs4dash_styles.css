@@ -1,0 +1,46 @@
+/* bs4dash-py theme variables and avatar helpers */
+:root {
+  /* Avatar tokens */
+  --bs4dash-avatar-bg: #6c757d;
+  --bs4dash-avatar-fg: #ffffff;
+  --bs4dash-avatar-sm-size: 24px;
+  --bs4dash-avatar-md-size: 32px;
+  --bs4dash-avatar-lg-size: 48px;
+  --bs4dash-avatar-sm-font: 12px;
+  --bs4dash-avatar-md-font: 14px;
+  --bs4dash-avatar-lg-font: 18px;
+}
+
+.user-avatar-initials {
+  display: inline-block;
+  border-radius: 50%;
+  text-align: center;
+  font-weight: 600;
+  color: var(--bs4dash-avatar-fg);
+  background: var(--bs4dash-avatar-bg);
+  vertical-align: middle;
+}
+.user-avatar-initials.avatar-sm {
+  width: var(--bs4dash-avatar-sm-size);
+  height: var(--bs4dash-avatar-sm-size);
+  font-size: var(--bs4dash-avatar-sm-font);
+  line-height: var(--bs4dash-avatar-sm-size);
+}
+.user-avatar-initials.avatar-md {
+  width: var(--bs4dash-avatar-md-size);
+  height: var(--bs4dash-avatar-md-size);
+  font-size: var(--bs4dash-avatar-md-font);
+  line-height: var(--bs4dash-avatar-md-size);
+}
+.user-avatar-initials.avatar-lg {
+  width: var(--bs4dash-avatar-lg-size);
+  height: var(--bs4dash-avatar-lg-size);
+  font-size: var(--bs4dash-avatar-lg-font);
+  line-height: var(--bs4dash-avatar-lg-size);
+}
+.user-avatar-initials.avatar-circle {
+  border-radius: 50%;
+}
+
+/* Small utility spacing used elsewhere */
+.ml-1 { margin-left: .25rem; }
