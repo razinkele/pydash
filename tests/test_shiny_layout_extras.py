@@ -1,6 +1,6 @@
 def test_menu_item_renders_badge_and_link():
     import pytest
-    shiny = pytest.importorskip("shiny")
+    pytest.importorskip("shiny")
     from bs4dash_py import menu_item_shiny
 
     tag = menu_item_shiny("About", href="#about", badge="3")
@@ -12,7 +12,7 @@ def test_menu_item_renders_badge_and_link():
 
 def test_sidebar_accepts_dict_and_group():
     import pytest
-    shiny = pytest.importorskip("shiny")
+    pytest.importorskip("shiny")
     from bs4dash_py import sidebar_shiny
 
     menu = [
@@ -30,7 +30,7 @@ def test_sidebar_accepts_dict_and_group():
 
 def test_navbar_item_and_breadcrumb():
     import pytest
-    shiny = pytest.importorskip("shiny")
+    pytest.importorskip("shiny")
     from bs4dash_py import navbar_item_shiny, breadcrumb_shiny, navbar_user_menu_shiny
 
     n = navbar_item_shiny("Alerts", href="#alerts", badge="1", icon="fas fa-bell")
@@ -60,7 +60,7 @@ def test_navbar_item_and_breadcrumb():
 
 def test_sidebar_header_and_divider_and_icons():
     import pytest
-    shiny = pytest.importorskip("shiny")
+    pytest.importorskip("shiny")
     from bs4dash_py import sidebar_header_shiny, sidebar_divider_shiny, menu_item_shiny
 
     hdr = sidebar_header_shiny("Main")

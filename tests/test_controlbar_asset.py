@@ -1,6 +1,6 @@
 import pytest
 
-shiny = pytest.importorskip("shiny")
+pytest.importorskip("shiny")
 from bs4dash_py import dashboard_page_shiny
 
 
