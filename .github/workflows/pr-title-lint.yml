@@ -11,8 +11,10 @@ jobs:
   lint-pr-title:
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR title follows Conventional Commits and suggest a fix
+      - name: Check PR title follows Conventional Commits and optionally auto-fix
         uses: actions/github-script@v7
+        env:
+          TITLE_BOT_TOKEN: ${{ secrets.TITLE_BOT_TOKEN }}
         with:
           script: |
             const pr = context.payload.pull_request;
@@ -67,6 +69,23 @@ jobs:
               else suggested = `chore: ${title}`;
             }
 
+            // If a TITLE_BOT_TOKEN is provided, attempt to update the PR title directly
+            const botToken = process.env.TITLE_BOT_TOKEN;
+            if (botToken) {
+              try {
+                const bot = github.getOctokit(botToken);
+                await bot.rest.pulls.update({ owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, title: suggested });
+                const body = `Hi @${pr.user.login}, I automatically updated the PR title to follow Conventional Commits:\n\n**New title:** \`${suggested}\`\n\nIf this is incorrect, please edit the title or revert.`;
+                await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, body });
+                core.info(`Auto-updated PR title to: ${suggested}`);
+                return; // success
+              } catch (e) {
+                core.info('Failed to auto-update PR title: ' + e.message);
+                // fall through to posting suggestion
+              }
+            }
+
+            // Post a suggestion comment and fail the check if we couldn't auto-fix
             const body = `Hi @${pr.user.login}, the PR title does not follow the Conventional Commits format.\n\n**Current title:** \`${title}\`\n**Suggested title:** \`${suggested}\`\n\nYou can update the title by clicking \"Edit\" next to the PR title. Example format: \`feat(scope): short description\`.\n\nIf this suggestion is incorrect, update the PR title to an appropriate Conventional Commit message.`;
 
             await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, body });
