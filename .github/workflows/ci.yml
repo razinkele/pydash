@@ -73,3 +73,11 @@ jobs:
           else
             echo "ERROR: bs4dash_controlbar.js not found in wheel"; exit 1
           fi
+      - name: Verify asset in sdist
+        run: |
+          echo "Checking sdist for bs4dash_controlbar.js"
+          if tar -tzf dist/*.tar.gz | grep -q "bs4dash_controlbar.js"; then
+            echo "Asset found in sdist"
+          else
+            echo "ERROR: bs4dash_controlbar.js not found in sdist"; exit 1
+          fi
