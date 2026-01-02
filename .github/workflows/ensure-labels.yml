@@ -1,0 +1,49 @@
+name: Ensure Labels
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  ensure-labels:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: feat
+            color: '0e8a16'
+            description: 'New features'
+          - name: fix
+            color: 'd73a4a'
+            description: 'Bug fixes'
+          - name: chore
+            color: 'f29513'
+            description: 'Chores & maintenance'
+          - name: docs
+            color: '0366d6'
+            description: 'Documentation changes'
+          - name: test
+            color: 'c2e0ff'
+            description: 'Tests and test infrastructure'
+          - name: refactor
+            color: 'fbca04'
+            description: 'Code refactoring without feature or bug changes'
+          - name: perf
+            color: 'ffdf0a'
+            description: 'Performance improvements'
+          - name: ci
+            color: '8077ff'
+            description: 'CI / build related changes'
+    steps:
+      - name: Create or update label
+        uses: peter-evans/create-or-update-label@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ matrix.name }}
+          color: ${{ matrix.color }}
+          description: ${{ matrix.description }}
