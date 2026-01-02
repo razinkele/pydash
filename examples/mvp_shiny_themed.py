@@ -9,7 +9,6 @@ from bs4dash_py import (
     controlbar_shiny,
     value_box_shiny,
     info_box_shiny,
-    tabs_shiny,
 )
 
 # CDNs

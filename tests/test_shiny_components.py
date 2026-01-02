@@ -17,7 +17,7 @@ def test_tabs_shiny():
     import pytest
 
     pytest.importorskip("shiny")
-    from bs4dash_py import tabs_shiny, tab_item_shiny
+    from bs4dash_py import tabs_shiny
 
     t = tabs_shiny("tabs1", ("tab1", "One", "Content 1", True), ("tab2", "Two", "Content 2"))
     html = str(t)
