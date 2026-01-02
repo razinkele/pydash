@@ -45,4 +45,23 @@ def box_shiny(*args, **kwargs):
     return _lazy_import("box_shiny", "shiny_layout")(*args, **kwargs)
 
 
-__all__ = ["dashboard_page", "navbar", "sidebar", "box"]
+def body_shiny(*args, **kwargs):
+    return _lazy_import("body_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def footer_shiny(*args, **kwargs):
+    return _lazy_import("footer_shiny", "shiny_layout")(*args, **kwargs)
+
+
+__all__ = [
+    "dashboard_page",
+    "navbar",
+    "sidebar",
+    "box",
+    "dashboard_page_shiny",
+    "navbar_shiny",
+    "sidebar_shiny",
+    "box_shiny",
+    "body_shiny",
+    "footer_shiny",
+]
