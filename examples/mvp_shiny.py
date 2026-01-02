@@ -27,6 +27,19 @@ content = ui.tags.div(
         ),
         box_shiny(ui.tags.p("Another box"), title="Box 2", status="success", width=6),
     ),
+    ui.tags.hr(),
+    ui.tags.div(
+        {"class": "row"},
+        ui.tags.div(
+            {"class": "col-12"},
+            ui.input_action_button("show_cb", "Show controlbar"),
+            ui.input_action_button("hide_cb", "Hide controlbar"),
+            ui.tags.p(
+                "Use these buttons in your app server to call \n"
+                "`show_controlbar(session)` and `hide_controlbar(session)` helpers."
+            ),
+        ),
+    ),
 )
 
 # footer example
