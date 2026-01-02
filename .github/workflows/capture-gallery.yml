@@ -1,7 +1,7 @@
 name: Capture Gallery Screenshots
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   schedule:
     - cron: '0 6 * * 1'  # weekly on Mondays at 06:00 UTC (optional)
 
