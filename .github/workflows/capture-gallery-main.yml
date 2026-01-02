@@ -1,0 +1,45 @@
+name: Capture Gallery (main)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Capture screenshots and upload artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install playwright Pillow
+
+      - name: Install Playwright browsers
+        run: |
+          python -m playwright install --with-deps
+
+      - name: Capture screenshots
+        run: |
+          mkdir -p docs/images
+          python scripts/capture_gallery_screenshots.py --examples examples/mvp_shiny.py --out docs/images
+
+      - name: Upload screenshots and thumbnails
+        uses: actions/upload-artifact@v4
+        with:
+          name: gallery-images
+          path: |
+            docs/images/**
+
+      - name: Done
+        run: echo "Capture finished"
