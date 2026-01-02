@@ -6,6 +6,7 @@ on:
 
 permissions:
   pull-requests: read
+  issues: write
 
 jobs:
   lint-pr-title:
@@ -77,6 +78,13 @@ jobs:
                 await bot.rest.pulls.update({ owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, title: suggested });
                 const body = `Hi @${pr.user.login}, I automatically updated the PR title to follow Conventional Commits:\n\n**New title:** \`${suggested}\`\n\nIf this is incorrect, please edit the title or revert.`;
                 await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, body });
+                // Add a label so we can audit auto-fixed titles later
+                try {
+                  await github.rest.issues.addLabels({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, labels: ['title-auto-fixed'] });
+                  core.info('Added label: title-auto-fixed');
+                } catch (e) {
+                  core.info('Failed to add title-auto-fixed label: ' + e.message);
+                }
                 core.info(`Auto-updated PR title to: ${suggested}`);
                 return; // success
               } catch (e) {

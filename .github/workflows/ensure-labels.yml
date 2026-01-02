@@ -39,6 +39,9 @@ jobs:
           - name: ci
             color: '8077ff'
             description: 'CI / build related changes'
+          - name: title-auto-fixed
+            color: '006b75'
+            description: 'PR title was auto-fixed by the title bot'
     steps:
       - name: Create or update label
         uses: peter-evans/create-or-update-label@v2
