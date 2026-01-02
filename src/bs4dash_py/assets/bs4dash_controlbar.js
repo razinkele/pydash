@@ -118,5 +118,27 @@
                 el.innerHTML = msg.content || '';
             }catch(e){console.error(e);}
         });
+
+        // Pushmenu toggle: click handler toggles `sidebar-collapse` on <body>
+        try{
+            var pm = document.getElementById('pushmenu-toggle');
+            if(pm){
+                pm.addEventListener('click', function(ev){
+                    ev.preventDefault();
+                    document.body.classList.toggle('sidebar-collapse');
+                });
+            }
+        }catch(e){console.error(e);}
+
+        // Controlbar toggle click handler: toggle control sidebar visibility
+        try{
+            var cb = document.getElementById('controlbar-toggle');
+            if(cb){
+                cb.addEventListener('click', function(ev){
+                    ev.preventDefault();
+                    document.body.classList.toggle('control-sidebar-open');
+                });
+            }
+        }catch(e){console.error(e);}
     }
 })();
