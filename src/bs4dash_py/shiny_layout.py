@@ -7,6 +7,7 @@ def dashboard_page_shiny(
     header=None,
     sidebar=None,
     body=None,
+    controlbar=None,
     footer=None,
     title="bs4dash-py MVP",
     adminlte_css=None,
@@ -24,22 +25,51 @@ def dashboard_page_shiny(
         ui.tags.div(
             {"class": "content-wrapper"}, body or ui.tags.div({"class": "content"})
         ),
+        controlbar,
         footer or ui.tags.footer({"class": "main-footer"}),
     ]
 
     page = ui.tags.div(
         *head_links,
-        ui.tags.div({"class": "wrapper"}, *wrapper_children),
+        ui.tags.div(
+            {"class": "wrapper"}, *[c for c in wrapper_children if c is not None]
+        ),
         ui.tags.script(src=adminlte_js) if adminlte_js else None,
     )
     return page
 
 
-def navbar_shiny(title="Dashboard", id="dashboard-navbar"):
+def navbar_shiny(
+    title="Dashboard", id="dashboard-navbar", right_ui=None, controlbar_icon=None
+):
+    """Create a navbar; optionally attach right-side UI elements and a controlbar toggle.
+
+    - right_ui: a list of tags to render on the right side
+    - controlbar_icon: a tag to use as the controlbar toggle (if provided)
+    """
+    right_items = right_ui or []
+    if controlbar_icon is not None:
+        # controlbar toggle placed on the right
+        right_items = list(right_items) + [
+            ui.tags.li(
+                {"class": "nav-item"},
+                ui.tags.a(
+                    {
+                        "id": "controlbar-toggle",
+                        "class": "nav-link",
+                        "data-widget": "control-sidebar",
+                        "href": "#",
+                    },
+                    controlbar_icon,
+                ),
+            )
+        ]
+
     return ui.tags.nav(
         {"class": "main-header navbar navbar-expand"},
         ui.tags.ul(
             {"class": "navbar-nav"},
+            # sidebar toggle (left)
             ui.tags.li(
                 {"class": "nav-item"},
                 ui.tags.a(
@@ -52,6 +82,7 @@ def navbar_shiny(title="Dashboard", id="dashboard-navbar"):
                 ui.tags.span({"class": "nav-link"}, title),
             ),
         ),
+        ui.tags.ul({"class": "navbar-nav ml-auto navbar-right"}, *right_items),
         id=id,
     )
 
@@ -102,6 +133,49 @@ def box_shiny(children, title=None, status=None, width=12):
             {"class": cls}, header, ui.tags.div({"class": "card-body"}, children)
         ),
     )
+
+
+def dashboard_brand_shiny(title, color=None, href=None, image=None, opacity=0.8):
+    """Create a brand link for the sidebar/header.
+
+    - color: optional background status class (e.g., 'primary')
+    - href: optional URL
+    - image: optional image URL
+    - opacity: image opacity
+    """
+    cl = "brand-link"
+    if color:
+        cl = f"brand-link bg-{color}"
+
+    img_tag = None
+    if image:
+        img_tag = ui.tags.img(
+            {
+                "src": image,
+                "class": "brand-image img-circle elevation-3",
+                "style": f"opacity: {opacity}",
+            }
+        )
+
+    return ui.tags.a(
+        {"class": cl, "href": href or "#", "target": "_blank" if href else None},
+        img_tag,
+        ui.tags.span({"class": "brand-text font-weight-light"}, title),
+    )
+
+
+def controlbar_shiny(*children, dark=True, id="controlbar"):
+    """Create a right control sidebar.
+
+    - children: tags to include inside the controlbar
+    - dark: whether to use dark style
+    """
+    cl = (
+        "control-sidebar control-sidebar-dark"
+        if dark
+        else "control-sidebar control-sidebar-light"
+    )
+    return ui.tags.aside({"class": cl, "id": id}, *children)
 
 
 def body_shiny(*rows, container_class="container-fluid"):
