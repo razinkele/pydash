@@ -65,13 +65,13 @@ def test_visual_static_navbar_and_sidebar_badges():
                     )
                     == "1"
                 )
-                # Accessibility: badge should have an aria-label describing it
-                assert (
-                    page.evaluate(
-                        "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').getAttribute('aria-label')"
-                    )
-                    is not None
+                # Accessibility: badge should have an aria-label describing it and include the badge text
+                aria = page.evaluate(
+                    "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').getAttribute('aria-label')"
                 )
+                assert aria is not None
+                assert "1" in aria
+                assert "badge" in aria
 
                 # Static navbar badge (Notifications has badge '2')
                 page.wait_for_selector("a.nav-link[href='#notif'] .badge", timeout=5000)
@@ -81,13 +81,13 @@ def test_visual_static_navbar_and_sidebar_badges():
                     )
                     == "2"
                 )
-                # Accessibility: navbar badge should have aria-label
-                assert (
-                    page.evaluate(
-                        "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').getAttribute('aria-label')"
-                    )
-                    is not None
+                # Accessibility: navbar badge should have aria-label containing badge text
+                aria_nav = page.evaluate(
+                    "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').getAttribute('aria-label')"
                 )
+                assert aria_nav is not None
+                assert "2" in aria_nav
+                assert "badge" in aria_nav
 
                 browser.close()
         except Exception as e:
