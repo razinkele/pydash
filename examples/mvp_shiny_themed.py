@@ -1,4 +1,5 @@
 from shiny import App, ui
+from pathlib import Path
 
 from bs4dash_py import (
     box_shiny,
@@ -16,8 +17,7 @@ ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css
 ADMINLTE_JS = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"
 
 # Read local theme overrides
-import pathlib
-css_path = pathlib.Path(__file__).parent / "assets" / "custom_theme.css"
+css_path = Path(__file__).parent / "assets" / "custom_theme.css"
 custom_css = css_path.read_text() if css_path.exists() else ""
 
 hdr = navbar_shiny(
