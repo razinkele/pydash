@@ -65,6 +65,13 @@ def test_visual_static_navbar_and_sidebar_badges():
                     )
                     == "1"
                 )
+                # Accessibility: badge should have an aria-label describing it
+                assert (
+                    page.evaluate(
+                        "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').getAttribute('aria-label')"
+                    )
+                    is not None
+                )
 
                 # Static navbar badge (Notifications has badge '2')
                 page.wait_for_selector("a.nav-link[href='#notif'] .badge", timeout=5000)
@@ -73,6 +80,13 @@ def test_visual_static_navbar_and_sidebar_badges():
                         "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').textContent"
                     )
                     == "2"
+                )
+                # Accessibility: navbar badge should have aria-label
+                assert (
+                    page.evaluate(
+                        "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').getAttribute('aria-label')"
+                    )
+                    is not None
                 )
 
                 browser.close()
