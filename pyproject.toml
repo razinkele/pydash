@@ -18,6 +18,7 @@ dev = [
   "ruff==0.14.10",
   "isort==7.0.0",
   "flake8",
+  "shiny",
 ]
 
 [tool.black]
