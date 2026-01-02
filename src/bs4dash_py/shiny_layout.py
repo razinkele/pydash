@@ -102,3 +102,36 @@ def box_shiny(children, title=None, status=None, width=12):
             {"class": cls}, header, ui.tags.div({"class": "card-body"}, children)
         ),
     )
+
+
+def body_shiny(*rows, container_class="container-fluid"):
+    """Create a body wrapper (content area) consisting of rows or arbitrary tags.
+
+    Parameters
+    - *rows: one or more tags (e.g., `ui.tags.div(class_='row', children=...)`)
+    - container_class: outer container class (default: 'container-fluid')
+    """
+    content = ui.tags.div({"class": "content"}, *rows)
+    return ui.tags.div(
+        {"class": "content-wrapper"}, ui.tags.div({"class": container_class}, content)
+    )
+
+
+def footer_shiny(text=None, left=None, right=None):
+    """Create a footer for the dashboard.
+
+    - text: plain footer text (centered) or None
+    - left/right: optional tags or strings to place on left/right sections
+    """
+    left_tag = (
+        left
+        if left is not None
+        else ui.tags.div({"class": "float-left d-none d-sm-block"})
+    )
+    right_tag = (
+        right
+        if right is not None
+        else ui.tags.div({"class": "float-right d-none d-sm-block"})
+    )
+    center = ui.tags.div({"class": "text-center"}, text) if text is not None else None
+    return ui.tags.footer({"class": "main-footer"}, left_tag, center, right_tag)

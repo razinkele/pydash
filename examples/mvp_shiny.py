@@ -1,6 +1,12 @@
 from shiny import App, ui
 
-from bs4dash_py import box_shiny, dashboard_page_shiny, navbar_shiny, sidebar_shiny
+from bs4dash_py import (
+    box_shiny,
+    dashboard_page_shiny,
+    navbar_shiny,
+    sidebar_shiny,
+    footer_shiny,
+)
 
 # CDNs
 ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
@@ -20,10 +26,18 @@ content = ui.tags.div(
     ),
 )
 
+# footer example
+ftr = footer_shiny(
+    text="© 2026 My Company",
+    left=ui.tags.div(ui.tags.a({"href": "#"}, "Privacy")),
+    right=ui.tags.div(ui.tags.a({"href": "#"}, "Contact")),
+)
+
 page = dashboard_page_shiny(
     header=hdr,
     sidebar=side,
     body=content,
+    footer=ftr,
     adminlte_css=ADMINLTE,
     adminlte_js=ADMINLTE_JS,
 )
@@ -39,4 +53,7 @@ def server(input, output, session):
 app = App(app_ui, server)
 
 if __name__ == "__main__":
-    app.run()
+    import os
+
+    port = int(os.environ.get("PYBS4DASH_PORT", "8000"))
+    app.run(port=port)
