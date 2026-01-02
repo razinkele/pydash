@@ -7,6 +7,8 @@ on:
 
 jobs:
   publish:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,3 +29,19 @@ jobs:
           fi
           # publish using token stored in PYPI_API_TOKEN
           python -m twine upload dist/* -u __token__ -p "${PYPI_API_TOKEN}"
+      - name: Publish GitHub Release (un-draft)
+        if: env.PYPI_API_TOKEN != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = process.env.GITHUB_REF.replace('refs/tags/','');
+            // Find an existing release for the tag
+            const releases = await github.rest.repos.listReleases({ owner: context.repo.owner, repo: context.repo.repo });
+            const rel = releases.data.find(r => r.tag_name === tag);
+            if (rel) {
+              await github.rest.repos.updateRelease({ owner: context.repo.owner, repo: context.repo.repo, release_id: rel.id, draft: false });
+              core.info(`Published existing release for tag ${tag} (id=${rel.id})`);
+            } else {
+              await github.rest.repos.createRelease({ owner: context.repo.owner, repo: context.repo.repo, tag_name: tag, name: tag, body: 'Published via CI', draft: false });
+              core.info(`Created and published new release for tag ${tag}`);
+            }
