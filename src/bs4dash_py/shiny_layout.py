@@ -160,6 +160,73 @@ def box_shiny(children, title=None, status=None, width=12):
     )
 
 
+def value_box_shiny(value, title=None, icon=None, color=None, width=3, href=None):
+    """Create a small value box similar to AdminLTE's `small-box`.
+
+    - value: prominent value (string or tag)
+    - title: label below value
+    - icon: optional icon tag
+    - color: background color class suffix (e.g., 'primary')
+    - width: bootstrap column width (1-12)
+    - href: optional link for the footer
+    """
+    cl = "small-box"
+    if color:
+        cl += f" bg-{color}"
+
+    footer = ui.tags.a({"class": "small-box-footer", "href": href}, "More info") if href else None
+
+    return ui.tags.div(
+        {"class": f"col-{width}"},
+        ui.tags.div(
+            {"class": cl},
+            ui.tags.div({"class": "inner"}, ui.tags.h3(value), ui.tags.p(title) if title else None),
+            ui.tags.div({"class": "icon"}, icon) if icon else None,
+            footer,
+        ),
+    )
+
+
+def info_box_shiny(title, value, icon=None, color=None, width=12):
+    """Create an AdminLTE-style info box.
+
+    - title: the label/title
+    - value: prominent value
+    - icon: optional icon tag
+    - color: optional status class (e.g., 'danger')
+    """
+    cl = "info-box"
+
+    icon_tag = ui.tags.span({"class": f"info-box-icon bg-{color}"}, icon) if icon else None
+    content = ui.tags.div({"class": "info-box-content"}, ui.tags.span({"class": "info-box-text"}, title), ui.tags.span({"class": "info-box-number"}, value))
+    return ui.tags.div({"class": f"col-{width}"}, ui.tags.div({"class": cl}, icon_tag, content))
+
+
+def tabs_shiny(id, *tabs, nav_class="nav nav-tabs", content_class="tab-content"):
+    """Create a simple tabs container.
+
+    - id: container id
+    - tabs: tuples of (tab_id, title, content, active=False)
+    """
+    nav_items = []
+    panes = []
+    for tab in tabs:
+        tab_id, title, content = tab[0], tab[1], tab[2]
+        active = tab[3] if len(tab) > 3 else False
+        a_cls = "nav-link active" if active else "nav-link"
+        pane_cls = "tab-pane active" if active else "tab-pane"
+        nav_items.append(ui.tags.li({"class": "nav-item"}, ui.tags.a({"class": a_cls, "data-toggle": "tab", "href": f"#{tab_id}"}, title)))
+        panes.append(ui.tags.div({"class": pane_cls, "id": tab_id}, content))
+
+    return ui.tags.div({"id": id}, ui.tags.ul({"class": nav_class}, *nav_items), ui.tags.div({"class": content_class}, *panes))
+
+
+def tab_item_shiny(tab_id, content, active=False):
+    """Create a single tab pane for use with `tabs_shiny` (helper function)."""
+    cls = "tab-pane active" if active else "tab-pane"
+    return ui.tags.div({"class": cls, "id": tab_id}, content)
+
+
 def dashboard_brand_shiny(title, color=None, href=None, image=None, opacity=0.8):
     """Create a brand link for the sidebar/header.
 

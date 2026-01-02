@@ -40,6 +40,20 @@ content = ui.tags.div(
             ),
         ),
     ),
+    ui.tags.hr(),
+    ui.tags.div(
+        {"class": "row"},
+        value_box_shiny("42", title="Active", color="primary", width=3),
+        value_box_shiny("7", title="Alerts", color="danger", width=3),
+        info_box_shiny("Users", "123", color="success", width=6),
+    ),
+    ui.tags.div(
+        {"class": "row mt-3"},
+        ui.tags.div(
+            {"class": "col-12"},
+            tabs_shiny("example-tabs", ("t1", "Tab 1", ui.tags.p("Tab1 content"), True), ("t2", "Tab 2", ui.tags.p("Tab2 content"))),
+        ),
+    ),
 )
 
 # footer example
