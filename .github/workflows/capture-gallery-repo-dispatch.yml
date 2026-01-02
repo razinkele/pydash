@@ -1,16 +1,15 @@
-name: Capture Gallery Screenshots
+name: Capture Gallery (repo_dispatch)
 
 on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: '0 6 * * 1'  # weekly on Mondays at 06:00 UTC (optional)
+  repository_dispatch:
+    types: [capture_gallery]
 
 permissions:
   contents: read
 
 jobs:
   capture:
-    name: Capture screenshots and upload artifacts
+    name: Capture screenshots and upload artifacts (repo_dispatch)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,14 +19,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -44,9 +35,6 @@ jobs:
           mkdir -p docs/images
           python scripts/capture_gallery_screenshots.py --examples examples/mvp_shiny.py --out docs/images
 
-      - name: List generated images
-        run: ls -la docs/images || true
-
       - name: Upload screenshots and thumbnails
         uses: actions/upload-artifact@v4
         with:
@@ -58,6 +46,3 @@ jobs:
         if: ${{ secrets.GALLERY_PUSH_TOKEN != '' }}
         run: |
           echo "GALLERY_PUSH_TOKEN provided but commit step is currently simplified in CI. If you want CI to push images, replace this placeholder with the commit logic or set up the PAT and re-enable the step."
-
-      - name: Done
-        run: echo "Gallery capture job completed. Artifacts uploaded as 'gallery-images'."
