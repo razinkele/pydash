@@ -44,7 +44,7 @@ jobs:
             description: 'PR title was auto-fixed by the title bot'
     steps:
       - name: Create or update label
-        uses: peter-evans/create-or-update-label@v2
+        uses: peter-evans/create-or-update-labels@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ matrix.name }}
