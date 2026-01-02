@@ -89,6 +89,25 @@ def test_visual_static_navbar_and_sidebar_badges():
                 assert "2" in aria_nav
                 assert "badge" in aria_nav
 
+                # Run an axe-core accessibility audit on the page (inject from CDN).
+                # This is a best-effort audit; failures will surface as test failures with details.
+                page.add_script_tag(
+                    url="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.3/axe.min.js"
+                )
+                axe = page.evaluate(
+                    "async () => { const r = await axe.run(); return {violations: r.violations.map(v=>({id:v.id, impact:v.impact, help:v.help, nodes: v.nodes.map(n=>({html: n.html, target:n.target}))}))}; }"
+                )
+                violations = axe.get("violations") if isinstance(axe, dict) else []
+                if violations:
+                    # Build a compact message with id and help
+                    msg_lines = [
+                        f"{v['id']} ({v.get('impact')}): {v.get('help')}"
+                        for v in violations
+                    ]
+                    pytest.fail(
+                        "Accessibility audit failures:\n" + "\n".join(msg_lines)
+                    )
+
                 browser.close()
         except Exception as e:
             pytest.skip(f"Playwright test failed to run: {e}")
