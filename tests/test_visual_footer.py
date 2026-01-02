@@ -1,10 +1,11 @@
 def test_visual_footer():
     import os
-    import sys
-    import subprocess
     import socket
+    import subprocess
+    import sys
     import time
     import urllib.request
+
     import pytest
 
     pytest.importorskip("shiny")

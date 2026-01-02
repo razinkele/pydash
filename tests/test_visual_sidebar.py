@@ -1,9 +1,10 @@
 def test_visual_sidebar_toggle():
     import os
-    import sys
-    import subprocess
     import socket
+    import subprocess
+    import sys
     import time
+
     import pytest
 
     pytest.importorskip("playwright.sync_api")

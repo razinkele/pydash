@@ -34,7 +34,8 @@ def test_navbar_item_and_breadcrumb():
     import pytest
 
     pytest.importorskip("shiny")
-    from bs4dash_py import navbar_item_shiny, breadcrumb_shiny, navbar_user_menu_shiny
+    from bs4dash_py import (breadcrumb_shiny, navbar_item_shiny,
+                            navbar_user_menu_shiny)
 
     n = navbar_item_shiny("Alerts", href="#alerts", badge="1", icon="fas fa-bell")
     s = str(n)
@@ -71,7 +72,8 @@ def test_sidebar_header_and_divider_and_icons():
     import pytest
 
     pytest.importorskip("shiny")
-    from bs4dash_py import sidebar_header_shiny, sidebar_divider_shiny, menu_item_shiny
+    from bs4dash_py import (menu_item_shiny, sidebar_divider_shiny,
+                            sidebar_header_shiny)
 
     hdr = sidebar_header_shiny("Main")
     assert "nav-header" in str(hdr)

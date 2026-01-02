@@ -18,8 +18,8 @@ The images can then be embedded in `docs/gallery.md`.
 
 import argparse
 import os
-import subprocess
 import socket
+import subprocess
 import sys
 import time
 from pathlib import Path

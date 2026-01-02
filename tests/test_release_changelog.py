@@ -1,7 +1,8 @@
-import subprocess
 import re
-import pytest
+import subprocess
 from pathlib import Path
+
+import pytest
 
 
 def _run_git(cmd):

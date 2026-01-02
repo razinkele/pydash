@@ -1,16 +1,10 @@
-from shiny import App, ui
 from pathlib import Path
 
-from bs4dash_py import (
-    box_shiny,
-    dashboard_page_shiny,
-    navbar_shiny,
-    sidebar_shiny,
-    footer_shiny,
-    controlbar_shiny,
-    value_box_shiny,
-    info_box_shiny,
-)
+from shiny import App, ui
+
+from bs4dash_py import (box_shiny, controlbar_shiny, dashboard_page_shiny,
+                        footer_shiny, info_box_shiny, navbar_shiny,
+                        sidebar_shiny, value_box_shiny)
 
 # CDNs
 ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
@@ -97,7 +91,8 @@ app_ui = ui.page_fixed(style_tag, page)
 
 def server(input, output, session):
     from shiny import reactive
-    from bs4dash_py import show_controlbar, hide_controlbar
+
+    from bs4dash_py import hide_controlbar, show_controlbar
 
     @reactive.Effect
     def _show_cb_handler():

@@ -2,6 +2,7 @@ def test_brand_and_controlbar():
     import importlib
     import os
     import sys
+
     import pytest
 
     pytest.importorskip("shiny")
