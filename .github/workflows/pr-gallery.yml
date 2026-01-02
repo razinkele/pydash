@@ -1,0 +1,71 @@
+name: PR Gallery Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  capture-thumbs:
+    if: |
+      (github.event.action == 'labeled' && github.event.label && github.event.label.name == 'preview') ||
+      (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'preview'))
+    name: Capture thumbnails for PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install deps (best-effort)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . || true
+          pip install playwright Pillow || true
+
+      - name: Install Playwright browsers (best-effort)
+        run: python -m playwright install --with-deps || true
+
+      - name: Capture thumbnails (non-blocking)
+        id: capture
+        continue-on-error: true
+        run: |
+          OUT_DIR=docs/images/pr-${{ github.event.number }}
+          mkdir -p "$OUT_DIR"
+          python scripts/capture_gallery_screenshots.py --examples examples/mvp_shiny.py --out "$OUT_DIR"
+
+      - name: List capture output
+        if: always()
+        run: |
+          ls -la docs/images || true
+
+      - name: Upload captured images as artifact (non-blocking)
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gallery-pr-${{ github.event.number }}
+          path: docs/images/pr-${{ github.event.number }}/**
+
+      - name: Comment on PR with artifact info
+        if: always()
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          issue-number: ${{ github.event.number }}
+          body: |
+            :camera: Gallery preview generated for this PR (artifact name: **gallery-pr-${{ github.event.number }}**).
+
+            You can download the images from the Actions run's **Artifacts** section.
+
+            _Note: capturing thumbnails is best-effort — if Playwright or the browsers are not available on the runner the step will be skipped._
