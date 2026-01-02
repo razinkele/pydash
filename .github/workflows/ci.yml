@@ -81,3 +81,8 @@ jobs:
           else
             echo "ERROR: bs4dash_controlbar.js not found in sdist"; exit 1
           fi
+      - name: Run packaging tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+          pytest -q tests/test_packaging_assets.py -q
