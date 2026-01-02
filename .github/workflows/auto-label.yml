@@ -1,0 +1,55 @@
+name: Auto Label PRs
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  label-by-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Label based on changed files
+        uses: actions/labeler@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+
+  label-by-title:
+    runs-on: ubuntu-latest
+    needs: label-by-files
+    steps:
+      - name: Label from PR title (Conventional Commit style)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info('No pull request found in context; skipping title labeler');
+              return;
+            }
+            const title = pr.title || '';
+            const match = title.match(/^(feat|fix|docs|test|chore|refactor|perf|ci)(\([^)]*\))?:/i);
+            if (!match) { core.info('No conventional commit prefix in PR title; skipping'); return; }
+            const label = match[1].toLowerCase();
+            // map commit types to labels
+            const mapping = {
+              feat: 'feat',
+              fix: 'fix',
+              docs: 'docs',
+              test: 'test',
+              chore: 'chore',
+              refactor: 'refactor',
+              perf: 'perf',
+              ci: 'ci',
+            };
+            const labelName = mapping[label];
+            if (!labelName) { core.info(`No label mapping for ${label}`); return; }
+            // Add label to PR
+            await github.rest.issues.addLabels({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, labels: [labelName] });
+            core.info(`Added label '${labelName}' based on PR title: ${title}`);
