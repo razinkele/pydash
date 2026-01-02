@@ -2,16 +2,9 @@ from pathlib import Path
 
 from shiny import App, ui
 
-from bs4dash_py import (
-    box_shiny,
-    controlbar_shiny,
-    dashboard_page_shiny,
-    footer_shiny,
-    info_box_shiny,
-    navbar_shiny,
-    sidebar_shiny,
-    value_box_shiny,
-)
+from bs4dash_py import (box_shiny, controlbar_shiny, dashboard_page_shiny,
+                        footer_shiny, info_box_shiny, navbar_shiny,
+                        sidebar_shiny, value_box_shiny)
 
 # CDNs
 ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
