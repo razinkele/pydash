@@ -61,6 +61,23 @@ def controlbar_shiny(*args, **kwargs):
     return _lazy_import("controlbar_shiny", "shiny_layout")(*args, **kwargs)
 
 
+# convenience helpers
+def value_box_shiny(*args, **kwargs):
+    return _lazy_import("value_box_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def info_box_shiny(*args, **kwargs):
+    return _lazy_import("info_box_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def tabs_shiny(*args, **kwargs):
+    return _lazy_import("tabs_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def tab_item_shiny(*args, **kwargs):
+    return _lazy_import("tab_item_shiny", "shiny_layout")(*args, **kwargs)
+
+
 # Server-side helpers for updating controlbar from Python
 def show_controlbar(*args, **kwargs):
     return _lazy_import("show_controlbar", "server")(*args, **kwargs)
@@ -87,6 +104,10 @@ __all__ = [
     "footer_shiny",
     "dashboard_brand_shiny",
     "controlbar_shiny",
+    "value_box_shiny",
+    "info_box_shiny",
+    "tabs_shiny",
+    "tab_item_shiny",
     # server helpers
     "show_controlbar",
     "hide_controlbar",
