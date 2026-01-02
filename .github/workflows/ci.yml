@@ -51,7 +51,7 @@ jobs:
           pip install playwright
           playwright install --with-deps
       - name: Run Playwright visual tests
-        run: pytest -q tests/test_visual_controlbar.py -q
+        run: pytest -q tests/test_visual_*.py -q
 
   packaging:
     runs-on: ubuntu-latest
