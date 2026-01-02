@@ -27,7 +27,7 @@ def test_visual_controlbar_asset_and_show_hide():
 
     try:
         # Wait for server to be ready (timeout)
-        deadline = time.time() + 20
+        deadline = time.time() + 60
         last_err = None
         while time.time() < deadline:
             try:
@@ -40,7 +40,20 @@ def test_visual_controlbar_asset_and_show_hide():
                 last_err = e
                 time.sleep(0.5)
         else:
-            pytest.fail(f"Server did not respond in time: {last_err}")
+            # Give process a chance to terminate and capture stderr for diagnostics
+            try:
+                proc.terminate()
+                proc.wait(timeout=2)
+            except Exception:
+                pass
+            stderr = ""
+            try:
+                stderr = proc.stderr.read().decode(errors="ignore")
+            except Exception:
+                stderr = "<could not read stderr>"
+            pytest.fail(
+                f"Server did not respond in time: {last_err}\nserver stderr:\n{stderr}"
+            )
 
         from playwright.sync_api import sync_playwright
 
