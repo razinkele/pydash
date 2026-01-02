@@ -1,11 +1,20 @@
 # bs4dash-py (MVP)
 
+[![CI](https://github.com/razinkele/pydash/actions/workflows/ci.yml/badge.svg)](https://github.com/razinkele/pydash/actions/workflows/ci.yml) [Distributions (Artifacts)](https://github.com/razinkele/pydash/actions?query=workflow%3ACI)
+
 Minimal MVP to provide AdminLTE3/Bootstrap4-style dashboard building blocks for Shiny for Python.
 
 Quick start
 
 1. Install: `pip install -e .` (in project root)
 2. Run example: `python examples/mvp_shiny.py`
+
+Build artifacts
+
+- The CI packaging job uploads built distributions as workflow artifacts (name: `distributions-<run_id>`).
+- To download the latest wheel/sdist:
+  1. Visit the CI workflow page: https://github.com/razinkele/pydash/actions/workflows/ci.yml
+  2. Open the latest successful run and click **Artifacts** → download the `distributions-<run_id>` zip and extract the wheel/sdist.
 
 Contributing
 
