@@ -1,4 +1,4 @@
-def test_visual_controlbar_asset_and_show_hide():
+def test_visual_updates_sidebar_nav_and_tab():
     import os
     import sys
     import subprocess
@@ -51,7 +51,6 @@ def test_visual_controlbar_asset_and_show_hide():
                     pytest.skip(f"Playwright browsers not available: {e}")
                 page = browser.new_page()
 
-                # Intercept page requests to assert the asset is requested
                 page.goto(f"http://127.0.0.1:{port}/", timeout=10000)
 
                 # Ensure the controlbar script is present (either external or inlined)
@@ -61,18 +60,23 @@ def test_visual_controlbar_asset_and_show_hide():
                 except Exception:
                     pytest.fail("bs4dash_controlbar.js was not included on the page")
 
-                # Initially controlbar should not be open
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is False
+                # Sidebar badge: ensure absent, then click and wait for badge
+                assert page.evaluate("() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge') === null") is True
+                page.click("#bs_update_sidebar_badges")
+                page.wait_for_selector(".main-sidebar .nav a[href='#about'] .badge", timeout=5000)
+                assert page.evaluate("() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').textContent") == "9"
 
-                # Click the show button and wait for class
-                page.click("#show_cb")
-                page.wait_for_function("() => document.body.classList.contains('control-sidebar-open')", timeout=5000)
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is True
+                # Navbar items updated
+                page.click("#bs_update_navbar_items")
+                page.wait_for_function("() => document.querySelectorAll('#demo-navbar ul li').length >= 2", timeout=5000)
+                # first item has badge
+                assert page.evaluate("() => document.querySelector('#demo-navbar ul li a .badge').textContent") == "1"
 
-                # Click hide button and wait for removal
-                page.click("#hide_cb")
-                page.wait_for_function("() => !document.body.classList.contains('control-sidebar-open')", timeout=5000)
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is False
+                # Tab content update
+                # switch to tab 1 (click its nav link) then wait for updated content
+                page.click("#example-tabs .nav .nav-link")
+                page.click("#bs_update_tab_content")
+                page.wait_for_function("() => document.getElementById('t1') && document.getElementById('t1').innerText.includes('Updated from server')", timeout=5000)
 
                 browser.close()
         except Exception as e:

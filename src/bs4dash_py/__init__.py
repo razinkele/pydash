@@ -78,6 +78,34 @@ def tab_item_shiny(*args, **kwargs):
     return _lazy_import("tab_item_shiny", "shiny_layout")(*args, **kwargs)
 
 
+def menu_item_shiny(*args, **kwargs):
+    return _lazy_import("menu_item_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def menu_group_shiny(*args, **kwargs):
+    return _lazy_import("menu_group_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def navbar_item_shiny(*args, **kwargs):
+    return _lazy_import("navbar_item_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def navbar_user_menu_shiny(*args, **kwargs):
+    return _lazy_import("navbar_user_menu_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def breadcrumb_shiny(*args, **kwargs):
+    return _lazy_import("breadcrumb_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def sidebar_header_shiny(*args, **kwargs):
+    return _lazy_import("sidebar_header_shiny", "shiny_layout")(*args, **kwargs)
+
+
+def sidebar_divider_shiny(*args, **kwargs):
+    return _lazy_import("sidebar_divider_shiny", "shiny_layout")(*args, **kwargs)
+
+
 # Server-side helpers for updating controlbar from Python
 def show_controlbar(*args, **kwargs):
     return _lazy_import("show_controlbar", "server")(*args, **kwargs)
@@ -89,6 +117,18 @@ def hide_controlbar(*args, **kwargs):
 
 def toggle_controlbar(*args, **kwargs):
     return _lazy_import("toggle_controlbar", "server")(*args, **kwargs)
+
+
+def update_sidebar_badges(*args, **kwargs):
+    return _lazy_import("update_sidebar_badges", "server")(*args, **kwargs)
+
+
+def update_navbar_items(*args, **kwargs):
+    return _lazy_import("update_navbar_items", "server")(*args, **kwargs)
+
+
+def update_tab_content(*args, **kwargs):
+    return _lazy_import("update_tab_content", "server")(*args, **kwargs)
 
 
 __all__ = [
@@ -108,8 +148,19 @@ __all__ = [
     "info_box_shiny",
     "tabs_shiny",
     "tab_item_shiny",
+    "menu_item_shiny",
+    "menu_group_shiny",
+    "navbar_item_shiny",
+    "breadcrumb_shiny",
+    "sidebar_header_shiny",
+    "sidebar_divider_shiny",
     # server helpers
     "show_controlbar",
     "hide_controlbar",
     "toggle_controlbar",
+    "update_sidebar",
+    "update_navbar_tabs",
+    "update_sidebar_badges",
+    "update_navbar_items",
+    "update_tab_content",
 ]
