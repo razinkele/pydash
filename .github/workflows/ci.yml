@@ -86,3 +86,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
           pytest -q tests/test_packaging_assets.py -q
+      - name: Upload built distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions-${{ github.run_id }}
+          path: dist/*
