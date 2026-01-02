@@ -1,0 +1,18 @@
+/* Custom theme overrides for bs4dash-py example */
+:root {
+  --bs4dash-avatar-bg: #1f7a8c; /* teal */
+  --bs4dash-avatar-fg: #ffffff;
+  --bs4dash-avatar-md-size: 40px;
+  --bs4dash-avatar-md-font: 16px;
+}
+
+/* Make info badges more prominent */
+.badge.badge-info {
+  background-color: #ff6b6b;
+  color: #fff;
+}
+
+/* Slightly larger small-box headings */
+.small-box .inner h3 {
+  font-size: 1.5rem;
+}

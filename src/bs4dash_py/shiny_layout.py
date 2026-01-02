@@ -29,14 +29,41 @@ def dashboard_page_shiny(
         footer or ui.tags.footer({"class": "main-footer"}),
     ]
 
-    # Prefer an external asset when possible: attempt to use `ui.include_js` to
-    # include the packaged asset `bs4dash_py/assets/bs4dash_controlbar.js`.
-    # Fall back to inlining the script if the host Shiny doesn't support
-    # `ui.include_js` (ensures backward compatibility across py-shiny versions).
+    # Prefer external assets when possible: include controlbar JS and our
+    # stylesheet. Fall back to inlining the content when running from the
+    # source tree or when `ui.include_*` helpers aren't available.
+    controlbar_asset = None
+    style_asset = None
+
     if hasattr(ui, "include_js"):
-        controlbar_asset = ui.include_js("bs4dash_py/assets/bs4dash_controlbar.js")
-    else:
-        # fallback: inline the file content so behavior remains available
+        try:
+            controlbar_asset = ui.include_js("bs4dash_py/assets/bs4dash_controlbar.js")
+        except Exception:
+            try:
+                from pathlib import Path
+
+                p = Path(__file__).parent / "assets" / "bs4dash_controlbar.js"
+                if p.exists():
+                    content = p.read_text(encoding="utf-8")
+                    controlbar_asset = ui.tags.script(content)
+            except Exception:
+                controlbar_asset = None
+
+    if hasattr(ui, "include_css"):
+        try:
+            style_asset = ui.include_css("bs4dash_py/assets/bs4dash_styles.css")
+        except Exception:
+            try:
+                from pathlib import Path
+
+                p = Path(__file__).parent / "assets" / "bs4dash_styles.css"
+                if p.exists():
+                    style_asset = ui.tags.style(p.read_text(encoding="utf-8"))
+            except Exception:
+                style_asset = None
+
+    # fallback JS stub if no asset available
+    if controlbar_asset is None:
         controlbar_asset = ui.tags.script(
             "(function(){\n"
             "    function handle(msg){\n"
@@ -53,6 +80,11 @@ def dashboard_page_shiny(
             "})();"
         )
 
+    # fallback style stub if no asset available
+    if style_asset is None:
+        style_asset = ui.tags.style(
+            ".user-avatar-initials{display:inline-block;border-radius:50%;font-weight:600;background:#6c757d;color:#fff;text-align:center}.user-avatar-initials.avatar-md{width:32px;height:32px;line-height:32px}")
+
     page = ui.tags.div(
         *head_links,
         ui.tags.div(
@@ -64,15 +96,130 @@ def dashboard_page_shiny(
     return page
 
 
+def navbar_item_shiny(title, href="#", badge=None, icon=None):
+    """Create a navbar item with optional badge and icon."""
+    children = []
+    if icon:
+        if isinstance(icon, str):
+            children.append(ui.tags.i({"class": icon}))
+        else:
+            children.append(icon)
+    children.append(title)
+
+    a = ui.tags.a({"class": "nav-link", "href": href}, *children)
+    if badge:
+        a.append(ui.tags.span({"class": "badge badge-info ml-1"}, badge))
+    return ui.tags.li({"class": "nav-item"}, a)
+
+
+def _initials_from_name(name: str) -> str:
+    """Return initials derived from a display name (e.g., 'Alice Bob' -> 'AB')."""
+    try:
+        parts = [p for p in str(name).strip().split() if p]
+        if not parts:
+            return ""
+        if len(parts) == 1:
+            return parts[0][0].upper()
+        return (parts[0][0] + parts[-1][0]).upper()
+    except Exception:
+        return ""
+
+
+def _initials_avatar(name: str, size: int = 32):
+    """Create a simple initials avatar tag using CSS classes (no inline styles).
+
+    - size: preferred pixel width (32 default). Maps to `avatar-sm|md|lg` classes.
+    """
+    initials = _initials_from_name(name)
+    # choose size class
+    if size <= 24:
+        sz = "avatar-sm"
+    elif size <= 32:
+        sz = "avatar-md"
+    else:
+        sz = "avatar-lg"
+    return ui.tags.span({"class": f"user-avatar-initials {sz} avatar-circle"}, initials)
+
+
+def navbar_user_menu_shiny(name, image=None, dropdown_items=None, id="user-menu"):
+    """Create a user menu in the navbar.
+
+    - name: display name (string or tag)
+    - image: optional avatar URL or tag (string class)
+    - dropdown_items: iterable of tags or (title, href) tuples
+    - id: id attribute for the container
+    """
+    # Build the toggle link
+    toggle_children = []
+    if image:
+        if isinstance(image, str):
+            toggle_children.append(
+                ui.tags.img({"src": image, "class": "img-circle elevation-2", "alt": name})
+            )
+        else:
+            toggle_children.append(image)
+    else:
+        # Fallback to initials avatar when no image is provided
+        try:
+            toggle_children.append(_initials_avatar(name))
+        except Exception:
+            # degrade gracefully
+            toggle_children.append(ui.tags.span({"class": "ml-1"}, name))
+
+    toggle_children.append(ui.tags.span({"class": "ml-1"}, name))
+
+    a = ui.tags.a(
+        {
+            "class": "nav-link dropdown-toggle",
+            "href": "#",
+            "data-toggle": "dropdown",
+            "aria-expanded": "false",
+            "id": id,
+            "role": "button",
+        },
+        *toggle_children,
+    )
+
+    # Build dropdown menu
+    menu_children = []
+    if dropdown_items:
+        for it in dropdown_items:
+            if isinstance(it, tuple):
+                title, href = it
+                menu_children.append(ui.tags.a({"class": "dropdown-item", "href": href}, title))
+            else:
+                menu_children.append(it)
+    else:
+        menu_children.append(ui.tags.span({"class": "dropdown-item-text"}, "No items"))
+
+    menu = ui.tags.div({"class": "dropdown-menu dropdown-menu-right"}, *menu_children)
+
+    return ui.tags.li({"class": "nav-item dropdown"}, a, menu)
+
+
 def navbar_shiny(
     title="Dashboard", id="dashboard-navbar", right_ui=None, controlbar_icon=None
 ):
     """Create a navbar; optionally attach right-side UI elements and a controlbar toggle.
 
-    - right_ui: a list of tags to render on the right side
+    - right_ui: a list of tags to render on the right side (plain tags or dicts)
     - controlbar_icon: a tag to use as the controlbar toggle (if provided)
     """
-    right_items = right_ui or []
+    # normalize right_ui entries: allow dicts to specify title/href/badge
+    processed = []
+    for it in (right_ui or []):
+        if isinstance(it, dict):
+            # Accept user_menu dict shortcut
+            if it.get("type") == "user":
+                processed.append(
+                    navbar_user_menu_shiny(it.get("title", ""), image=it.get("image"), dropdown_items=it.get("items"))
+                )
+            else:
+                processed.append(navbar_item_shiny(it.get("title", ""), it.get("href", "#"), it.get("badge"), it.get("icon")))
+        else:
+            processed.append(it)
+
+    right_items = processed
     if controlbar_icon is not None:
         # controlbar toggle placed on the right
         right_items = list(right_items) + [
@@ -112,16 +259,107 @@ def navbar_shiny(
     )
 
 
+def menu_item_shiny(text, href="#", badge=None, active=False, icon=None):
+    """Create a single sidebar menu item.
+
+    - text: link text
+    - href: link href
+    - badge: optional badge text
+    - active: whether to mark item active
+    - icon: optional icon (string class or tag)
+    """
+    a_cls = "nav-link active" if active else "nav-link"
+
+    # build children for anchor: icon (optional) then text
+    children = []
+    if icon:
+        if isinstance(icon, str):
+            children.append(ui.tags.i({"class": icon}))
+        else:
+            children.append(icon)
+    children.append(text)
+
+    a = ui.tags.a({"class": a_cls, "href": href}, *children)
+    if badge:
+        # Matches classes used by client handler
+        a.append(ui.tags.span({"class": "badge badge-info float-right"}, badge))
+    return ui.tags.li({"class": "nav-item"}, a)
+
+
+def menu_group_shiny(title, items):
+    """Create a simple menu group (collapsible tree) with child items.
+
+    - title: group title
+    - items: list of (text, href, badge?, icon?) tuples or dicts
+    """
+    children = []
+    for it in items:
+        if isinstance(it, dict):
+            text = it.get("text", "")
+            href = it.get("href", "#")
+            badge = it.get("badge")
+            icon = it.get("icon")
+        else:
+            text, href = it[0], it[1]
+            badge = it[2] if len(it) > 2 else None
+            icon = it[3] if len(it) > 3 else None
+        children.append(menu_item_shiny(text, href, badge, False, icon))
+
+    # Minimal tree markup
+    return ui.tags.li(
+        {"class": "nav-item has-treeview"},
+        ui.tags.a({"class": "nav-link"}, ui.tags.p(title)),
+        ui.tags.ul({"class": "nav nav-treeview"}, *children),
+    )
+
+
 def sidebar_shiny(brand_title="My app", menu=None, id="main-sidebar"):
+    """Create a sidebar. Menu entries may be:
+
+    - simple tuple: (text, href)
+    - tuple with badge: (text, href, badge)
+    - dict: {"text":..., "href":..., "badge":...}
+    - group: ("Group title", [item, item, ...])
+    """
     menu_items = []
     if menu:
-        for text, href in menu:
-            menu_items.append(
-                ui.tags.li(
-                    {"class": "nav-item"},
-                    ui.tags.a({"class": "nav-link", "href": href}, text),
-                )
-            )
+        for entry in menu:
+            # explicit divider marker
+            if isinstance(entry, str) and entry.upper() == "DIVIDE":
+                menu_items.append(sidebar_divider_shiny())
+                continue
+
+            # header marker (single-element tuple)
+            if isinstance(entry, tuple) and len(entry) == 1:
+                menu_items.append(sidebar_header_shiny(entry[0]))
+                continue
+
+            # group
+            if isinstance(entry, tuple) and isinstance(entry[1], list):
+                title, items = entry[0], entry[1]
+                menu_items.append(menu_group_shiny(title, items))
+                continue
+
+            # dict
+            if isinstance(entry, dict):
+                text = entry.get("text", "")
+                href = entry.get("href", "#")
+                badge = entry.get("badge")
+                active = entry.get("active", False)
+                icon = entry.get("icon")
+                menu_items.append(menu_item_shiny(text, href, badge, active, icon))
+                continue
+
+            # simple tuple or tuple with badge/icon
+            try:
+                text, href = entry[0], entry[1]
+                badge = entry[2] if len(entry) > 2 else None
+                icon = entry[3] if len(entry) > 3 else None
+                menu_items.append(menu_item_shiny(text, href, badge, False, icon))
+            except Exception:
+                # ignore malformed entries
+                continue
+
     return ui.tags.aside(
         {"class": "main-sidebar sidebar-dark-primary elevation-4", "id": id},
         ui.tags.a(
@@ -225,6 +463,29 @@ def tab_item_shiny(tab_id, content, active=False):
     """Create a single tab pane for use with `tabs_shiny` (helper function)."""
     cls = "tab-pane active" if active else "tab-pane"
     return ui.tags.div({"class": cls, "id": tab_id}, content)
+
+
+def breadcrumb_shiny(*items):
+    """Create breadcrumb markup from strings or (title, href) tuples."""
+    parts = []
+    for it in items:
+        if isinstance(it, tuple):
+            title, href = it
+            parts.append(ui.tags.li({"class": "breadcrumb-item"}, ui.tags.a({"href": href}, title)))
+        else:
+            parts.append(ui.tags.li({"class": "breadcrumb-item active"}, it))
+    return ui.tags.ol({"class": "breadcrumb"}, *parts)
+
+
+def sidebar_header_shiny(text):
+    """Render a sidebar header (visual group header)."""
+    return ui.tags.li({"class": "nav-header"}, text)
+
+
+def sidebar_divider_shiny():
+    """Render a horizontal divider for the sidebar."""
+    # Return an HR element; caller can include it between items in the menu list
+    return ui.tags.hr({"class": "sidebar-divider mt-2 mb-2"})
 
 
 def dashboard_brand_shiny(title, color=None, href=None, image=None, opacity=0.8):
