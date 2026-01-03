@@ -156,6 +156,39 @@ jobs:
               }
               body += `\nYou can download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n\n`;
               body += "Tip: click the 'Artifacts' section on the run page and download the `test-artifacts` archive to retrieve logs, screenshots, HAR and traces.";
+
+              // Additionally, try to collect a one-line stderr/console summary per artifact folder
+              try {
+                const fs = require('fs');
+                const path = require('path');
+                const ws = process.env.GITHUB_WORKSPACE || '.';
+                const artDir = path.join(ws, 'test-artifacts');
+                const shortLines = [];
+                if (fs.existsSync(artDir)) {
+                  const candidates = fs.readdirSync(artDir, { withFileTypes: true }).filter(d=>d.isDirectory()).map(d=>d.name);
+                  for (const d of candidates) {
+                    try {
+                      const folder = path.join(artDir, d);
+                      const sfile = path.join(folder, 'server_stderr.txt');
+                      const cfile = path.join(folder, 'console.log');
+                      let firstLine = null;
+                      if (fs.existsSync(sfile)) {
+                        const txt = fs.readFileSync(sfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (!firstLine && fs.existsSync(cfile)) {
+                        const txt = fs.readFileSync(cfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (firstLine) shortLines.push(`${d.replace(/_/g,'::')}: ${firstLine}`);
+                    } catch (e) {}
+                  }
+                }
+                if (shortLines.length > 0) {
+                  body = '🔍 **One-line stderr summaries:**\n' + shortLines.map(l=>`- ${l}`).join('\n') + '\n\n' + body;
+                }
+              } catch (e) {}
+
             } else {
               body += 'No artifacts were found for this run.';
             }
@@ -313,6 +346,39 @@ jobs:
               }
               body += `\nYou can download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n\n`;
               body += "Tip: click the 'Artifacts' section on the run page and download the `test-artifacts` archive to retrieve logs, screenshots, HAR and traces.";
+
+              // Additionally, try to collect a one-line stderr/console summary per artifact folder
+              try {
+                const fs = require('fs');
+                const path = require('path');
+                const ws = process.env.GITHUB_WORKSPACE || '.';
+                const artDir = path.join(ws, 'test-artifacts');
+                const shortLines = [];
+                if (fs.existsSync(artDir)) {
+                  const candidates = fs.readdirSync(artDir, { withFileTypes: true }).filter(d=>d.isDirectory()).map(d=>d.name);
+                  for (const d of candidates) {
+                    try {
+                      const folder = path.join(artDir, d);
+                      const sfile = path.join(folder, 'server_stderr.txt');
+                      const cfile = path.join(folder, 'console.log');
+                      let firstLine = null;
+                      if (fs.existsSync(sfile)) {
+                        const txt = fs.readFileSync(sfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (!firstLine && fs.existsSync(cfile)) {
+                        const txt = fs.readFileSync(cfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (firstLine) shortLines.push(`${d.replace(/_/g,'::')}: ${firstLine}`);
+                    } catch (e) {}
+                  }
+                }
+                if (shortLines.length > 0) {
+                  body = '🔍 **One-line stderr summaries:**\n' + shortLines.map(l=>`- ${l}`).join('\n') + '\n\n' + body;
+                }
+              } catch (e) {}
+
             } else {
               body += 'No artifacts were found for this run.';
             }
