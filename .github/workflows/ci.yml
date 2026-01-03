@@ -117,6 +117,30 @@ jobs:
         with:
           name: test-artifacts
           path: test-artifacts/**
+      - name: Post PR comment with artifact links (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const runId = process.env.GITHUB_RUN_ID;
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+            let body = `⚠️ **Shiny smoke tests failed** — artifacts uploaded for diagnosis.\n\n`;
+            if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
+              for (const a of artifacts.data.artifacts) {
+                body += `- **${a.name}** — ${a.size_in_bytes} bytes\n`;
+              }
+              body += `\nYou can download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n\n`;
+              body += "Tip: click the 'Artifacts' section on the run page and download the `test-artifacts` archive to retrieve logs, screenshots, HAR and traces.";
+            } else {
+              body += 'No artifacts were found for this run.';
+            }
+            const pr = context.payload.pull_request?.number;
+            if (pr) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            } else {
+              console.log('Not a pull_request event; skipping PR comment.');
+            }
 
   playwright:
     runs-on: ubuntu-latest
@@ -159,6 +183,30 @@ jobs:
         with:
           name: test-artifacts
           path: test-artifacts/**
+      - name: Post PR comment with artifact links (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const runId = process.env.GITHUB_RUN_ID;
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+            let body = `⚠️ **Playwright visual tests failed** — artifacts uploaded for diagnosis.\n\n`;
+            if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
+              for (const a of artifacts.data.artifacts) {
+                body += `- **${a.name}** — ${a.size_in_bytes} bytes\n`;
+              }
+              body += `\nYou can download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n\n`;
+              body += "Tip: click the 'Artifacts' section on the run page and download the `test-artifacts` archive to retrieve logs, screenshots, HAR and traces.";
+            } else {
+              body += 'No artifacts were found for this run.';
+            }
+            const pr = context.payload.pull_request?.number;
+            if (pr) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            } else {
+              console.log('Not a pull_request event; skipping PR comment.');
+            }
 
   packaging:
     runs-on: ubuntu-latest
