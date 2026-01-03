@@ -124,7 +124,31 @@ jobs:
           script: |
             const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
             const runId = process.env.GITHUB_RUN_ID;
+
+            // List artifacts for the run
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+
+            // Collect failed jobs and their failing steps for a short summary
+            const jobsResp = await github.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: parseInt(runId) });
+            const jobs = jobsResp.data?.jobs || [];
+            const failedJobs = jobs.filter(j => j.conclusion !== 'success');
+            let summary = '';
+            if (failedJobs.length > 0) {
+              for (const job of failedJobs) {
+                summary += `\n**${job.name}** — conclusion: ${job.conclusion}\n`;
+                const failingSteps = (job.steps || []).filter(s => s.conclusion !== 'success');
+                if (failingSteps.length > 0) {
+                  for (const s of failingSteps) {
+                    summary += `  - ${s.name} — ${s.conclusion}\n`;
+                  }
+                } else {
+                  summary += '  - (no failing step names available)\n';
+                }
+              }
+            } else {
+              summary = 'No failed jobs detected.';
+            }
+
             let body = `⚠️ **Shiny smoke tests failed** — artifacts uploaded for diagnosis.\n\n`;
             if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
               for (const a of artifacts.data.artifacts) {
@@ -135,6 +159,9 @@ jobs:
             } else {
               body += 'No artifacts were found for this run.';
             }
+
+            body += `\n\n---\n**Failure summary:**\n${summary}`;
+
             const pr = context.payload.pull_request?.number;
             if (pr) {
               await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
@@ -190,7 +217,31 @@ jobs:
           script: |
             const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
             const runId = process.env.GITHUB_RUN_ID;
+
+            // artifacts
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+
+            // jobs and failing steps summary
+            const jobsResp = await github.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: parseInt(runId) });
+            const jobs = jobsResp.data?.jobs || [];
+            const failedJobs = jobs.filter(j => j.conclusion !== 'success');
+            let summary = '';
+            if (failedJobs.length > 0) {
+              for (const job of failedJobs) {
+                summary += `\n**${job.name}** — conclusion: ${job.conclusion}\n`;
+                const failingSteps = (job.steps || []).filter(s => s.conclusion !== 'success');
+                if (failingSteps.length > 0) {
+                  for (const s of failingSteps) {
+                    summary += `  - ${s.name} — ${s.conclusion}\n`;
+                  }
+                } else {
+                  summary += '  - (no failing step names available)\n';
+                }
+              }
+            } else {
+              summary = 'No failed jobs detected.';
+            }
+
             let body = `⚠️ **Playwright visual tests failed** — artifacts uploaded for diagnosis.\n\n`;
             if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
               for (const a of artifacts.data.artifacts) {
@@ -201,6 +252,9 @@ jobs:
             } else {
               body += 'No artifacts were found for this run.';
             }
+
+            body += `\n\n---\n**Failure summary:**\n${summary}`;
+
             const pr = context.payload.pull_request?.number;
             if (pr) {
               await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
