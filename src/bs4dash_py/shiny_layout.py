@@ -236,16 +236,14 @@ def navbar_user_menu_shiny(name, image=None, dropdown_items=None, id="user-menu"
 
     toggle_children.append(ui.tags.span({"class": "ml-1"}, name))
 
-    a_style = "color:#000000;background:#ffffff;padding:0.3rem 0.6rem;font-weight:700;font-size:20px;border-radius:6px;display:inline-block;"
     a = ui.tags.a(
         {
-            "class": "nav-link dropdown-toggle",
+            "class": "nav-link dropdown-toggle navbar-user-toggle",
             "href": "#",
             "data-toggle": "dropdown",
             "aria-expanded": "false",
             "id": id,
             "role": "button",
-            "style": a_style,
         },
         *toggle_children,
     )
