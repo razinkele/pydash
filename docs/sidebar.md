@@ -5,7 +5,7 @@ The sidebar helpers make it easy to build AdminLTE-style side navigation.
 Key functions
 
 - `menu_item_shiny(text, href='#', badge=None, active=False, icon=None)`
-  - Creates a single sidebar item. `icon` can be an icon class (string) or a tag.
+  - Creates a single sidebar item. `icon` can be an icon class (string) or a tag. `badge` may be either a string or a dict like `{ "text": "3", "class": "badge badge-warning" }` or `{ "text": "5", "color": "danger" }`. Badge elements include an `aria-label` describing the badge text for improved accessibility.
 - `menu_group_shiny(title, items)`
   - Creates a collapsible group. `items` are tuples or dicts accepted by `menu_item_shiny`.
 - `sidebar_header_shiny(text)`

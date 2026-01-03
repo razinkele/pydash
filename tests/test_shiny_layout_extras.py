@@ -62,9 +62,14 @@ def test_navbar_item_and_breadcrumb():
     # verify we use classes, not inline styles
     assert "style=" not in s2
 
-    bc = breadcrumb_shiny(("Home", "#"), "Section")
-    assert "breadcrumb" in str(bc)
-    assert "Section" in str(bc)
+    bc = breadcrumb_shiny(("Home", "#home"), "Section")
+    sbc = str(bc)
+    assert "breadcrumb" in sbc
+    assert "Section" in sbc
+    # the first item should be a link with the provided href
+    assert 'href="#home"' in sbc
+    # the active (last) item should be marked as active
+    assert 'class="breadcrumb-item active"' in sbc
 
 
 def test_sidebar_header_and_divider_and_icons():
