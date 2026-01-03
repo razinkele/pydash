@@ -9,6 +9,48 @@
   --bs4dash-avatar-sm-font: 12px;
   --bs4dash-avatar-md-font: 14px;
   --bs4dash-avatar-lg-font: 18px;
+
+  /* Navigation / Tabs */
+  --bs4dash-nav-fg: #000000;
+  --bs4dash-nav-bg: #ffffff;
+  --bs4dash-tab-fg: #000000;
+  --bs4dash-tab-bg: #ffffff;
+
+  /* Badge colors (info as example) */
+  --bs4dash-badge-info-bg: #17a2b8;
+  --bs4dash-badge-info-fg: #ffffff;
+
+  /* Primary / status tokens */
+  --bs4dash-primary-bg: #001f3f;
+  --bs4dash-primary-fg: #ffffff;
+  --bs4dash-success-bg: #0b5e2e;
+
+  /* Footer */
+  --bs4dash-footer-bg: #f8f9fa;
+  --bs4dash-footer-fg: #000000;
+}
+
+/* Map tokens to components (kept small and scoped) */
+.navbar .nav-link {
+  color: var(--bs4dash-nav-fg) !important;
+}
+.nav.nav-tabs {
+  background-color: var(--bs4dash-tab-bg) !important;
+}
+.nav.nav-tabs .nav-link {
+  color: var(--bs4dash-tab-fg) !important;
+}
+.badge.badge-info {
+  background-color: var(--bs4dash-badge-info-bg) !important;
+  color: var(--bs4dash-badge-info-fg) !important;
+}
+.small-box.bg-primary {
+  background-color: var(--bs4dash-primary-bg) !important;
+  color: var(--bs4dash-primary-fg) !important;
+}
+.main-footer {
+  background-color: var(--bs4dash-footer-bg) !important;
+  color: var(--bs4dash-footer-fg) !important;
 }
 
 .user-avatar-initials {

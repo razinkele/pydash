@@ -17,18 +17,41 @@ Add a small CSS snippet to your Shiny UI (example using `ui.tags.style`):
 ```py
 from shiny import ui
 
-custom_css = ui.tags.style(\"\"\"
+custom_css = ui.tags.style("""
 :root {
   --bs4dash-avatar-bg: #1f7a8c;
   --bs4dash-avatar-fg: #ffffff;
 }
-\"\"\")
+""")
 
 page = ui.page_fixed(custom_css, ...)
 ```
 
 Or place an overriding CSS file in your app's static assets and ensure it
 is included after the library CSS so your values take precedence.
+
+## Using the `Theme` helper (programmatic theming)
+
+A minimal `Theme` helper is provided (`bs4dash_py.Theme`) that emits CSS custom
+properties and a convenience helper `theme_tag` to inject them into the page
+head. This is useful for generating themes programmatically from configuration
+or for examples.
+
+Example:
+
+```py
+from bs4dash_py import Theme, theme_tag
+
+my_theme = Theme({
+  "bs4dash-avatar-bg": "#1f7a8c",
+  "bs4dash-badge-info-bg": "#ff6b6b",
+  "bs4dash-primary-bg": "#001f3f",
+})
+
+# Inject into your UI head
+style = theme_tag(my_theme)
+page = ui.page_fixed(style, page)
+```
 
 Notes
 
