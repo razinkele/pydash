@@ -87,6 +87,12 @@ def theme_tag(*args, **kwargs) -> Any:
     return _lazy_import("theme_tag", "theme")(*args, **kwargs)
 
 
+# Expose Theme class and convenient bootswatch helpers at package level.
+# Importing Theme is lightweight and the module handles missing Shiny
+# imports gracefully, so expose Theme for examples and consumers.
+from .theme import Theme  # noqa: E402
+
+
 def bootswatch_href(*args, **kwargs) -> str:
     """Return the Bootswatch CDN URL for a given theme name."""
     return _lazy_import("bootswatch_href", "theme")(*args, **kwargs)
@@ -220,4 +226,5 @@ __all__ = [
     "remove_navbar_item",
     "update_navbar_badge",
     "update_tab_content",
+    "Theme",
 ]
