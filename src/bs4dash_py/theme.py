@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 try:
     # Keep Shiny import lazy for environments without shiny
@@ -22,7 +22,7 @@ class Theme:
     `Theme.bootswatch_href()` or `Theme.bootswatch_tag()`).
     """
 
-    def __init__(self, variables: Dict[str, str] | None = None):
+    def __init__(self, variables: Optional[Dict[str, str]] = None):
         self.variables = variables or {}
         self._bootswatch_name: Optional[str] = None
         self._bootswatch_version: Optional[str] = None
@@ -126,7 +126,7 @@ class Theme:
 
     def to_head_elements(
         self, id: Optional[str] = None, link_as_tag: Optional[bool] = None
-    ) -> tuple[Optional[Union[str, Any]], Optional[Union[str, Any]]]:
+    ) -> Tuple[Optional[Union[str, Any]], Optional[Union[str, Any]]]:
         """Return (link, style) elements suitable for injection into a page head.
 
         - link: the Bootswatch stylesheet reference (link tag or href), or None
@@ -322,7 +322,9 @@ def list_vendored_bootswatch() -> list:
         return []
 
 
-def serve_vendored_bootswatch(dest_dir: str | Path, themes: list | None = None) -> list:
+def serve_vendored_bootswatch(
+    dest_dir: Union[str, Path], themes: Optional[list] = None
+) -> list:
     """Copy vendored Bootswatch themes into a provided static directory.
 
     This is useful when serving static assets from a web app that expects
