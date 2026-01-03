@@ -289,6 +289,69 @@ def _default_bootswatch_provider(name: str, version: str = "5") -> Optional[str]
 register_asset_provider("bootswatch", _default_bootswatch_provider)
 
 
+# Default AdminLTE provider: prefer vendored CSS/JS under src assets, fall
+# back to tests/assets (useful for local CI tests). Accepts `type` kwarg: 'css' or 'js'.
+
+
+def _default_adminlte_provider(name: str, type: str = "css") -> Optional[str]:
+    try:
+        from pathlib import Path
+
+        candidates = [
+            Path(__file__).parent / "assets" / "adminlte.min.css",
+            Path(__file__).parent / "assets" / "adminlte.min.js",
+            Path(__file__).resolve().parents[1]
+            / "tests"
+            / "assets"
+            / "adminlte.min.css",
+            Path(__file__).resolve().parents[1]
+            / "tests"
+            / "assets"
+            / "adminlte.min.js",
+        ]
+        for p in candidates:
+            if p.exists():
+                if type == "css" and p.name.endswith(".css"):
+                    return p.resolve().as_uri()
+                if type == "js" and p.name.endswith(".js"):
+                    return p.resolve().as_uri()
+    except Exception:
+        pass
+    return None
+
+
+register_asset_provider("adminlte", _default_adminlte_provider)
+
+
+# Default fonts provider: prefer vendored fonts or google fonts stub under
+# src/assets/fonts or tests/stubs (look for known filenames), returns CSS href.
+
+
+def _default_fonts_provider(name: str, variant: Optional[str] = None) -> Optional[str]:
+    try:
+        from pathlib import Path
+
+        # Look for vendored font CSS first
+        base_src = Path(__file__).parent / "assets" / "fonts"
+        base_tests = Path(__file__).resolve().parents[1] / "tests" / "stubs"
+        # common google fonts stub
+        candidates = [
+            base_src / f"{name}.css",
+            base_tests / f"{name}_stub.css",
+            base_tests / f"{name}.css",
+            base_tests / "google_fonts_stub.css",
+        ]
+        for p in candidates:
+            if p.exists():
+                return p.resolve().as_uri()
+    except Exception:
+        pass
+    return None
+
+
+register_asset_provider("fonts", _default_fonts_provider)
+
+
 def bootswatch_href(name: str, version: str = "5") -> str:
     """Return the Bootswatch stylesheet href.
 
