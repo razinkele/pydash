@@ -2,6 +2,7 @@ from shiny import App, ui
 
 from bs4dash_py import (
     box_shiny,
+    breadcrumb_shiny,
     controlbar_shiny,
     dashboard_page_shiny,
     footer_shiny,
@@ -20,7 +21,12 @@ hdr = navbar_shiny(
     "bs4dash-py Shiny MVP",
     controlbar_icon=ui.tags.i({"class": "fas fa-th"}),
     right_ui=[
-        {"title": "Notifications", "href": "#notif", "badge": "2"},
+        # Notifications shows badge as a dict (colorable)
+        {
+            "title": "Notifications",
+            "href": "#notif",
+            "badge": {"text": "2", "color": "danger"},
+        },
         {
             "type": "user",
             "title": "Alice",
@@ -70,6 +76,14 @@ content = ui.tags.div(
         ),
     ),
     ui.tags.hr(),
+    # Breadcrumb example
+    ui.tags.div(
+        {"class": "row"},
+        ui.tags.div(
+            {"class": "col-12"},
+            breadcrumb_shiny(("Home", "#"), ("Section", "#section"), "Sub"),
+        ),
+    ),
     ui.tags.div(
         {"class": "row"},
         value_box_shiny("42", title="Active", color="primary", width=3),

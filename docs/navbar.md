@@ -23,7 +23,8 @@ nav = navbar_shiny("My App", right_ui=[alerts], controlbar_icon=ui.tags.i({"clas
 
 Notes
 
-- Badges are rendered with `badge badge-info` classes by default.
+- Badges are rendered with `badge badge-info` classes by default. Badges may also be provided as a dict, for example `{ "text": "3", "class": "badge badge-warning" }` or `{ "text": "5", "color": "danger" }`; the helper will normalize those fields into the appropriate classes.
+- For accessibility, badge elements include an `aria-label` that describes the badge (e.g., `"Alerts badge 5"`).
 - The `controlbar_icon` is placed on the far right and uses the same client-side controlbar handler if present.
 
 User menu
