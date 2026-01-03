@@ -143,6 +143,70 @@
             }catch(e){console.error(e);}
         });
 
+        // Add single nav item: payload {nav_id: 'demo', item: {title, href, badge}}
+        Shiny.addCustomMessageHandler('bs4dash_add_nav_item', function(msg){
+            try{
+                var nav = document.getElementById(msg.nav_id);
+                if(!nav) return;
+                var ul = nav.querySelector('ul');
+                if(!ul) return;
+                var it = msg.item || {};
+                var li = document.createElement('li');
+                li.className = 'nav-item';
+                var a = document.createElement('a');
+                a.className = 'nav-link';
+                a.href = it.href || '#';
+                a.textContent = it.title || '';
+                if(it.badge){
+                    var span = document.createElement('span');
+                    span.className = 'badge badge-info float-right';
+                    span.textContent = it.badge;
+                    a.appendChild(span);
+                }
+                li.appendChild(a);
+                ul.appendChild(li);
+            }catch(e){console.error(e);}
+        });
+
+        // Remove a nav item by href: payload {nav_id: 'demo', href: '#old'}
+        Shiny.addCustomMessageHandler('bs4dash_remove_nav_item', function(msg){
+            try{
+                var nav = document.getElementById(msg.nav_id);
+                if(!nav) return;
+                var href = msg.href;
+                if(!href) return;
+                var sel = "a.nav-link[href='" + href + "']";
+                var a = nav.querySelector(sel);
+                if(!a) return;
+                var li = a.closest('li');
+                if(li) li.remove();
+            }catch(e){console.error(e);}
+        });
+
+        // Update badge for navbar item: payload {nav_id, href, badge}
+        Shiny.addCustomMessageHandler('bs4dash_update_nav_badge', function(msg){
+            try{
+                var nav = document.getElementById(msg.nav_id);
+                if(!nav) return;
+                var sel = "a.nav-link[href='" + (msg.href || "#") + "']";
+                var a = nav.querySelector(sel);
+                if(!a) return;
+                var existing = a.querySelector('.badge');
+                if(msg.badge === null || msg.badge === undefined || msg.badge === ''){
+                    if(existing) existing.remove();
+                    return;
+                }
+                if(!existing){
+                    var span = document.createElement('span');
+                    span.className = 'badge badge-info float-right';
+                    span.textContent = msg.badge;
+                    a.appendChild(span);
+                } else {
+                    existing.textContent = msg.badge;
+                }
+            }catch(e){console.error(e);}
+        });
+
         // Update tab content: payload {tab_id: 't1', content: '<p>…</p>'}
         Shiny.addCustomMessageHandler('bs4dash_update_tab_content', function(msg){
             try{

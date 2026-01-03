@@ -35,4 +35,8 @@ line-length = 88
 where = ["src"]
 
 [tool.setuptools.package-data]
-"bs4dash_py" = ["assets/*.js"]
+"bs4dash_py" = ["assets/*.js", "assets/bootswatch/*/*"]
+
+[project.scripts]
+bs4dash-vendored-list = "bs4dash_py.cli:list_vendored_main"
+bs4dash-vendored-serve = "bs4dash_py.cli:serve_vendored_main"

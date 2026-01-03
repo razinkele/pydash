@@ -4,6 +4,7 @@ __version__ = "0.0.1"
 
 # Lazy import helpers to avoid requiring backend packages at import time (useful for tests)
 import importlib
+from typing import Any
 
 
 def _lazy_import(name, module="layout"):
@@ -78,6 +79,37 @@ def tab_item_shiny(*args, **kwargs):
     return _lazy_import("tab_item_shiny", "shiny_layout")(*args, **kwargs)
 
 
+def theme_tag(*args, **kwargs) -> Any:
+    """Return a style tag or raw CSS string for a Theme.
+
+    See `Theme.to_style_tag` for details; accepts an optional `id` kwarg.
+    """
+    return _lazy_import("theme_tag", "theme")(*args, **kwargs)
+
+
+def bootswatch_href(*args, **kwargs) -> str:
+    """Return the Bootswatch CDN URL for a given theme name."""
+    return _lazy_import("bootswatch_href", "theme")(*args, **kwargs)
+
+
+def bootswatch_tag(*args, **kwargs) -> Any:
+    """Return a Bootswatch link tag (or href string) depending on context.
+
+    See `bootswatch_tag` in `bs4dash_py.theme` for details on `as_tag`.
+    """
+    return _lazy_import("bootswatch_tag", "theme")(*args, **kwargs)
+
+
+def list_vendored_bootswatch(*args, **kwargs) -> list:
+    """Return list of vendored Bootswatch themes."""
+    return _lazy_import("list_vendored_bootswatch", "theme")(*args, **kwargs)
+
+
+def serve_vendored_bootswatch(*args, **kwargs):
+    """Copy vendored Bootswatch themes into a provided destination directory."""
+    return _lazy_import("serve_vendored_bootswatch", "theme")(*args, **kwargs)
+
+
 def menu_item_shiny(*args, **kwargs):
     return _lazy_import("menu_item_shiny", "shiny_layout")(*args, **kwargs)
 
@@ -131,6 +163,18 @@ def update_navbar_items(*args, **kwargs):
     return _lazy_import("update_navbar_items", "server")(*args, **kwargs)
 
 
+def add_navbar_item(*args, **kwargs):
+    return _lazy_import("add_navbar_item", "server")(*args, **kwargs)
+
+
+def remove_navbar_item(*args, **kwargs):
+    return _lazy_import("remove_navbar_item", "server")(*args, **kwargs)
+
+
+def update_navbar_badge(*args, **kwargs):
+    return _lazy_import("update_navbar_badge", "server")(*args, **kwargs)
+
+
 def update_tab_content(*args, **kwargs):
     return _lazy_import("update_tab_content", "server")(*args, **kwargs)
 
@@ -152,6 +196,11 @@ __all__ = [
     "info_box_shiny",
     "tabs_shiny",
     "tab_item_shiny",
+    "theme_tag",
+    "bootswatch_href",
+    "bootswatch_tag",
+    "list_vendored_bootswatch",
+    "serve_vendored_bootswatch",
     "menu_item_shiny",
     "menu_group_shiny",
     "navbar_item_shiny",
@@ -167,5 +216,8 @@ __all__ = [
     "update_sidebar_badges",
     "update_sidebar_active",
     "update_navbar_items",
+    "add_navbar_item",
+    "remove_navbar_item",
+    "update_navbar_badge",
     "update_tab_content",
 ]

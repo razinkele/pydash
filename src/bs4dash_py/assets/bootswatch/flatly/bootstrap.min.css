@@ -1,0 +1,10 @@
+/* Bootswatch 'Flatly' minimal vendored stub for CI: not a full theme, just a deterministic file */
+:root {
+  --bs-body-bg: #f7fbfc;
+  --bs-primary: #3bb3ab;
+}
+/* minimal rule to change .btn-primary background for visual checks */
+.btn-primary {
+  background-color: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+}

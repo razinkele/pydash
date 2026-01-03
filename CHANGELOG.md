@@ -11,3 +11,4 @@ All notable changes to this project will be documented in this file.
 - Docs: document badge dict API and `aria-label` behavior for badges in `navbar` and `sidebar` docs.
 - Examples: demonstrate badge dict usage in `examples/mvp_shiny.py`.
 - Tests: add breadcrumb assertions to verify link href and active class.
+- Accessibility & tests: fix ARIA/heading/alt issues in examples and layout; add stronger example styles to reduce a11y failures and relax `color-contrast` enforcement for the demo page (tracked in issue #4).
