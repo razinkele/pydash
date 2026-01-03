@@ -14,7 +14,7 @@ def test_visual_static_navbar_and_sidebar_badges(
     adir = pw_resources.get("adir")
     console_msgs = pw_resources.get("console", [])
 
-    page.goto(f"http://127.0.0.1:{port}/", timeout=10000)
+    page.goto(f"http://127.0.0.1:{port}/", timeout=10000, wait_until="domcontentloaded")
 
     # Static sidebar badge (About has badge '1')
     page.wait_for_selector(

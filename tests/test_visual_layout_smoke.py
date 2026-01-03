@@ -6,7 +6,7 @@ def test_visual_layout_structure_and_breadcrumb(start_example, playwright_page):
     port = start_example
     page = playwright_page
 
-    page.goto(f"http://127.0.0.1:{port}/", timeout=10000)
+    page.goto(f"http://127.0.0.1:{port}/", timeout=10000, wait_until="domcontentloaded")
 
     # Basic structure checks
     assert page.query_selector(".main-header") is not None
