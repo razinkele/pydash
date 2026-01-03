@@ -63,3 +63,45 @@ jobs:
         with:
           name: test-artifacts-playwright
           path: test-artifacts/**
+
+      - name: Post PR comment with artifact links (on PR)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const runId = process.env.GITHUB_RUN_ID;
+            // List artifacts for the run
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+            let body = `⚠️ **Playwright visual tests failed** — artifacts uploaded for diagnosis.\n\n`;
+            if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
+              for (const a of artifacts.data.artifacts) {
+                body += `- **${a.name}** — ${a.size_in_bytes} bytes\n`;
+              }
+              body += `\nDownload artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n`;
+            } else {
+              body += 'No artifacts were found for this run.\n';
+            }
+            const pr = context.payload.pull_request?.number;
+            if (pr) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            } else {
+              console.log('Not a pull_request event; skipping PR comment.');
+            }
+
+      - name: Add failing label to PR (on PR)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const pr = context.payload.pull_request?.number;
+            if (pr) {
+              try {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: pr, labels: ['visual-tests: failing'] });
+              } catch (e) {
+                console.log('Could not add label:', e.message);
+              }
+            } else {
+              console.log('Not a pull_request event; skipping label.');
+            }
