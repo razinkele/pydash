@@ -22,6 +22,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: "Ensure 'visual-tests: failing' label exists (on PR)"
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const name = 'visual-tests: failing';
+            const color = 'b60205';
+            const description = 'Indicates Playwright visual tests failed';
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name });
+            } catch (e) {
+              if (e.status === 404) {
+                await github.rest.issues.createLabel({ owner, repo, name, color, description });
+              } else {
+                throw e;
+              }
+            }
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
