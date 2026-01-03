@@ -111,6 +111,12 @@ jobs:
         run: pytest -q tests/test_shiny_*.py tests/test_dashboard_page.py -q
       - name: Run Playwright smoke tests (Shiny app)
         run: pytest -q tests/test_visual_layout_smoke.py tests/test_visual_static_badges.py -q
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test-artifacts/**
 
   playwright:
     runs-on: ubuntu-latest
@@ -147,6 +153,12 @@ jobs:
           pip install playwright
       - name: Run Playwright visual tests
         run: pytest -q tests/test_visual_*.py -q
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test-artifacts/**
 
   packaging:
     runs-on: ubuntu-latest
