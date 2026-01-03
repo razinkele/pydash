@@ -95,7 +95,7 @@ jobs:
           pip install -e '.[dev]'
           pip install shiny
       - name: Download Playwright browsers artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: playwright-browsers
           path: playwright-browsers
@@ -286,7 +286,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Download Playwright browsers artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: playwright-browsers
           path: playwright-browsers
