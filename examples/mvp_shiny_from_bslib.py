@@ -4,12 +4,14 @@ from shiny import App, ui
 
 from bs4dash_py import (
     Theme,
-    bootswatch_href,
     box_shiny,
     dashboard_page_shiny,
     footer_shiny,
     navbar_shiny,
 )
+
+# Local helper to control Bootswatch sourcing (cdn vs local vendored)
+from ._bootswatch import BOOTSWATCH_DEFAULT_THEME, get_bootswatch_href
 
 # Allow overriding AdminLTE assets via environment variables for CI/local vendoring
 ADMINLTE = os.environ.get(
@@ -44,6 +46,11 @@ dark_theme = Theme.from_bslib(bslib_dark)
 
 # Initial style tag
 style_tag = ui.tags.style(light_theme.to_css(), id="theme-styles")
+
+# Bootswatch asset sourcing: allow overriding whether to use a local vendored
+# file or the CDN via `PYBS4DASH_BOOTSWATCH_SRC=local|cdn` (default: local). Use
+# the small helper in `examples/_bootswatch.py` so tests can import it without
+# pulling in the full Shiny stack.
 
 hdr = navbar_shiny("bs4dash bslib conversion demo")
 side = None
@@ -82,7 +89,7 @@ script = ui.tags.script(
     "  document.getElementById('apply-light').addEventListener('click', function(){ apply('light') });\n"
     "  document.getElementById('apply-dark').addEventListener('click', function(){ apply('dark') });\n"
     "  document.getElementById('apply-flat-bs').addEventListener('click', function(){\n"
-    f"    try{{ var link = document.getElementById('bootswatch-link'); if(!link){{ link = document.createElement('link'); link.id='bootswatch-link'; link.rel='stylesheet'; document.head.appendChild(link); }} link.href = '{bootswatch_href('flatly')}'; }}catch(e){{}}\n"
+    f"    try{{ var link = document.getElementById('bootswatch-link'); if(!link){{ link = document.createElement('link'); link.id='bootswatch-link'; link.rel='stylesheet'; document.head.appendChild(link); }} link.href = '{get_bootswatch_href(BOOTSWATCH_DEFAULT_THEME)}'; }}catch(e){{}}\n"
     "  });\n"
     "})();"
 )
