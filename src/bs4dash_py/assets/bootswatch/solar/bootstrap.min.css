@@ -1,0 +1,9 @@
+/* Bootswatch 'Solar' minimal vendored stub for CI: not a full theme */
+:root {
+  --bs-body-bg: #fff8e1;
+  --bs-primary: #f6aa1c;
+}
+.btn-primary {
+  background-color: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+}

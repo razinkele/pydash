@@ -86,6 +86,32 @@ def dashboard_page_shiny(
             ".user-avatar-initials{display:inline-block;border-radius:50%;font-weight:600;background:#6c757d;color:#fff;text-align:center}.user-avatar-initials.avatar-md{width:32px;height:32px;line-height:32px}"
         )
 
+    # Prefer in-head style inclusion so a11y fixes are applied early
+    if style_asset is not None:
+        head_links.append(style_asset)
+
+    # Global theme overrides to ensure high-contrast navbar/tabs for a11y
+    # Note: intentionally scoped to header/tabs/demo areas to avoid changing
+    # the dark sidebar link styles (`.main-sidebar .nav .nav-link`).
+    global_override = ui.tags.style(
+        """
+        /* Global a11y overrides for navbar and tabs */
+        nav.navbar .nav-link,
+        .nav.nav-tabs .nav-link,
+        #demo-navbar .nav .nav-link,
+        #example-tabs .nav .nav-link {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 1.25rem !important; /* ~20px */
+            padding: 0.3rem 0.6rem !important;
+            display: inline-block !important;
+            border-radius: 6px !important;
+        }
+        """,
+    )
+    head_links.append(global_override)
+
     page = ui.tags.div(
         *head_links,
         ui.tags.div(
@@ -133,7 +159,10 @@ def navbar_item_shiny(title, href="#", badge=None, icon=None):
             children.append(icon)
     children.append(title)
 
-    a = ui.tags.a({"class": "nav-link", "href": href}, *children)
+    # Inline styles to ensure high-contrast navbar anchors (library-level override)
+    a_style = "color:#000000;background:#ffffff;padding:0.3rem 0.6rem;font-weight:700;font-size:20px;border-radius:6px;display:inline-block;"
+
+    a = ui.tags.a({"class": "nav-link", "href": href, "style": a_style}, *children)
     btext, bcls = _normalize_badge(badge)
     if btext is not None:
         # add aria-label for accessibility
@@ -188,7 +217,11 @@ def navbar_user_menu_shiny(name, image=None, dropdown_items=None, id="user-menu"
         if isinstance(image, str):
             toggle_children.append(
                 ui.tags.img(
-                    {"src": image, "class": "img-circle elevation-2", "alt": name}
+                    {
+                        "src": image,
+                        "class": "img-circle elevation-2",
+                        "alt": f"{name}'s avatar",
+                    }
                 )
             )
         else:
@@ -205,7 +238,7 @@ def navbar_user_menu_shiny(name, image=None, dropdown_items=None, id="user-menu"
 
     a = ui.tags.a(
         {
-            "class": "nav-link dropdown-toggle",
+            "class": "nav-link dropdown-toggle navbar-user-toggle",
             "href": "#",
             "data-toggle": "dropdown",
             "aria-expanded": "false",
@@ -286,7 +319,7 @@ def navbar_shiny(
         ]
 
     return ui.tags.nav(
-        {"class": "main-header navbar navbar-expand"},
+        {"class": "main-header navbar navbar-expand", "aria-label": title},
         ui.tags.ul(
             {"class": "navbar-nav"},
             # sidebar toggle (left)
@@ -307,7 +340,9 @@ def navbar_shiny(
     )
 
 
-def menu_item_shiny(text, href="#", badge=None, active=False, icon=None):
+def menu_item_shiny(
+    text, href="#", badge=None, active=False, icon=None, is_child=False
+):
     """Create a single sidebar menu item.
 
     - text: link text
@@ -315,6 +350,7 @@ def menu_item_shiny(text, href="#", badge=None, active=False, icon=None):
     - badge: optional badge text or dict {text, class?, color?}
     - active: whether to mark item active
     - icon: optional icon (string class or tag)
+    - is_child: whether this item is part of a nested submenu (affects ARIA roles)
     """
     a_cls = "nav-link active" if active else "nav-link"
 
@@ -336,7 +372,16 @@ def menu_item_shiny(text, href="#", badge=None, active=False, icon=None):
         a.append(
             ui.tags.span({"class": cls, "aria-label": f"{text} badge {btext}"}, btext)
         )
-    return ui.tags.li({"class": "nav-item"}, a)
+
+    li_attrs = {"class": "nav-item"}
+    # For top-level items (not children), expose semantic role 'menuitem' on the LI
+    if not is_child:
+        li_attrs["role"] = "menuitem"
+    else:
+        # For nested items, avoid giving them menuitem role; let their container be role=group
+        li_attrs["role"] = "none"
+
+    return ui.tags.li(li_attrs, a)
 
 
 def menu_group_shiny(title, items):
@@ -356,13 +401,17 @@ def menu_group_shiny(title, items):
             text, href = it[0], it[1]
             badge = it[2] if len(it) > 2 else None
             icon = it[3] if len(it) > 3 else None
-        children.append(menu_item_shiny(text, href, badge, False, icon))
+        # nested items are children (is_child=True) so ARIA roles differ
+        children.append(menu_item_shiny(text, href, badge, False, icon, is_child=True))
 
     # Minimal tree markup
     return ui.tags.li(
-        {"class": "nav-item has-treeview"},
-        ui.tags.a({"class": "nav-link"}, ui.tags.p(title)),
-        ui.tags.ul({"class": "nav nav-treeview"}, *children),
+        {"class": "nav-item has-treeview", "role": "menuitem"},
+        ui.tags.a({"class": "nav-link", "tabindex": "0"}, ui.tags.p(title)),
+        ui.tags.ul(
+            {"class": "nav nav-treeview", "role": "group", "aria-label": title},
+            *children,
+        ),
     )
 
 
@@ -438,7 +487,7 @@ def box_shiny(children, title=None, status=None, width=12):
         cls += f" card-{status}"
     header = (
         ui.tags.div(
-            {"class": "card-header"}, ui.tags.h3({"class": "card-title"}, title)
+            {"class": "card-header"}, ui.tags.h2({"class": "card-title"}, title)
         )
         if title
         else None
@@ -526,7 +575,13 @@ def tabs_shiny(id, *tabs, nav_class="nav nav-tabs", content_class="tab-content")
             ui.tags.li(
                 {"class": "nav-item"},
                 ui.tags.a(
-                    {"class": a_cls, "data-toggle": "tab", "href": f"#{tab_id}"}, title
+                    {
+                        "class": a_cls,
+                        "data-toggle": "tab",
+                        "href": f"#{tab_id}",
+                        "style": "color:#000000;background:#ffffff;padding:0.3rem 0.6rem;font-weight:700;font-size:20px;border-radius:6px;display:inline-block;",
+                    },
+                    title,
                 ),
             )
         )
@@ -563,13 +618,14 @@ def breadcrumb_shiny(*items):
 
 def sidebar_header_shiny(text):
     """Render a sidebar header (visual group header)."""
-    return ui.tags.li({"class": "nav-header"}, text)
+    # Use role=separator to avoid list semantics issues when used inside the menu
+    return ui.tags.li({"class": "nav-header", "role": "separator"}, text)
 
 
 def sidebar_divider_shiny():
     """Render a horizontal divider for the sidebar."""
-    # Return an HR element; caller can include it between items in the menu list
-    return ui.tags.hr({"class": "sidebar-divider mt-2 mb-2"})
+    # Return a separator list item so it is a valid child of the menu UL
+    return ui.tags.li({"class": "sidebar-divider mt-2 mb-2", "role": "separator"})
 
 
 def dashboard_brand_shiny(title, color=None, href=None, image=None, opacity=0.8):

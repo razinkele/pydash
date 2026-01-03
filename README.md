@@ -9,7 +9,44 @@ Minimal MVP to provide AdminLTE3/Bootstrap4-style dashboard building blocks for 
 Quick start
 
 1. Install: `pip install -e .` (in project root)
-2. Run example: `python examples/mvp_shiny.py`
+2. Run example: `python examples/mvp_shiny.py` or `python examples/mvp_shiny_from_bslib.py`
+
+Examples
+
+- Run the Shiny example that demonstrates converting a bslib-like theme to a `bs4dash` Theme:
+
+```bash
+python -m pip install -e '.[dev]'
+pip install shiny
+# Run the example (default port 8000)
+python examples/mvp_shiny_from_bslib.py
+```
+
+Environment variables supported by the example:
+
+- `PYBS4DASH_PORT` — Port to run the example on (default: 8000).
+- `PYBS4DASH_ADMINLTE` / `PYBS4DASH_ADMINLTE_JS` — Provide local paths (instead of CDN URLs) to inline AdminLTE CSS or JS for deterministic CI tests.
+- `PYBS4DASH_BOOTSWATCH_SRC` — `local` (default) or `cdn`. When set to `cdn`, the Bootswatch theme CSS will be loaded from jsdelivr; when `local` the example will prefer vendored files when present.
+- `PYBS4DASH_BOOTSWATCH_THEME` — Bootswatch theme name to use when applying Bootswatch from the example (default: `flatly`).
+
+Vendor script
+
+- Use `scripts/vendor_assets.py` to vendor AdminLTE and Bootswatch themes into `src/bs4dash_py/assets` so tests and CI can use deterministic local assets without relying on CDNs.
+
+Examples:
+
+```bash
+# Vendor AdminLTE from CDN into src assets
+python scripts/vendor_assets.py --adminlte "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" --adminlte-js "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"
+
+# Vendor Bootswatch themes
+python scripts/vendor_assets.py --bootswatch flatly,cyborg
+
+# Vendor from local sources
+python scripts/vendor_assets.py --adminlte-local tests/assets/adminlte.min.css --bootswatch-local flatly=tests/stubs/bootswatch_stub.min.css
+```
+
+Tip: In CI set `PYBS4DASH_BOOTSWATCH_SRC=local` and provide local `ADMINLTE` assets to avoid external network dependencies and flaky CDN DNS/blocked requests.
 
 Documentation
 

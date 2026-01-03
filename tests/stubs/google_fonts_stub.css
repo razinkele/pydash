@@ -1,0 +1,3 @@
+/* Minimal Google Fonts CSS stub for CI */
+@font-face { font-family: 'StubFont'; src: local('Arial'); }
+body { font-family: 'StubFont', sans-serif; }
