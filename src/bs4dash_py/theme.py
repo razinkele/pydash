@@ -223,32 +223,56 @@ def theme_tag(theme: Theme, id: Optional[str] = None) -> Union[str, Any]:
     return theme.to_style_tag(id=id)
 
 
-def bootswatch_href(name: str, version: str = "5") -> str:
-    """Return the Bootswatch stylesheet href.
+# Asset provider registry and helpers
+# Providers are simple callables that accept (name, **kwargs) and return an
+# href string (local file:// or CDN) or None to indicate they can't supply
+# the asset. Providers are tried in registration order until one returns
+# a string.
+_asset_providers: dict = {}
 
-    If a vendored copy of the requested theme exists under
-    `src/bs4dash_py/assets/bootswatch/<name>/bootstrap.min.css`, that local
-    file's `file://` URI will be returned for deterministic CI/test runs.
-    Otherwise, the function returns the CDN URL on jsdelivr.
 
-    Example: bootswatch_href('flatly') ->
-      'https://cdn.jsdelivr.net/npm/bootswatch@5/dist/flatly/bootstrap.min.css'
+def register_asset_provider(kind: str, provider, *, prepend: bool = False):
+    """Register an asset provider for a given asset kind.
 
-    Returns
-    -------
-    str
-        Fully-qualified URL to the Bootswatch CSS (either a local file URI or
-        a CDN URL).
-
-    Raises
-    ------
-    ValueError
-        If `name` is empty.
+    provider: Callable[[str, **kwargs], Optional[str]]
     """
-    if not name:
-        raise ValueError("theme name is required")
+    if kind not in _asset_providers:
+        _asset_providers[kind] = []
+    if prepend:
+        _asset_providers[kind].insert(0, provider)
+    else:
+        _asset_providers[kind].append(provider)
 
-    # Check for a vendored, deterministic copy first
+
+def unregister_asset_provider(kind: str, provider):
+    """Unregister a previously registered provider (no-op if not found)."""
+    if kind in _asset_providers and provider in _asset_providers[kind]:
+        _asset_providers[kind].remove(provider)
+
+
+def resolve_asset(kind: str, name: str, **kwargs) -> Optional[str]:
+    """Try providers for `kind` and return the first non-None href."""
+    if not name:
+        return None
+    providers = _asset_providers.get(kind, [])
+    for p in providers:
+        try:
+            res = p(name, **kwargs)
+            if res:
+                return res
+        except Exception:
+            continue
+    return None
+
+
+# Register a default provider for 'bootswatch' that prefers vendored assets
+# but returns None if none found so callers can fallback to CDN.
+
+
+def _default_bootswatch_provider(name: str, version: str = "5") -> Optional[str]:
+    if not name:
+        return None
+
     try:
         from pathlib import Path
 
@@ -258,8 +282,26 @@ def bootswatch_href(name: str, version: str = "5") -> str:
         if local.exists():
             return local.resolve().as_uri()
     except Exception:
-        # If anything goes wrong, fall back to CDN URL
         pass
+    return None
+
+
+register_asset_provider("bootswatch", _default_bootswatch_provider)
+
+
+def bootswatch_href(name: str, version: str = "5") -> str:
+    """Return the Bootswatch stylesheet href.
+
+    The function consults registered asset providers first. If a provider
+    returns a value (e.g., a vendored `file://` URI) it is returned. If no
+    provider can resolve the asset, a CDN URL on jsdelivr is returned.
+    """
+    if not name:
+        raise ValueError("theme name is required")
+
+    res = resolve_asset("bootswatch", name, version=version)
+    if res:
+        return res
 
     return f"https://cdn.jsdelivr.net/npm/bootswatch@{version}/dist/{name}/bootstrap.min.css"
 
