@@ -10,6 +10,7 @@ from bs4dash_py import (
     navbar_shiny,
     sidebar_shiny,
     tabs_shiny,
+    update_sidebar_active,
     value_box_shiny,
 )
 
@@ -110,6 +111,7 @@ content = ui.tags.div(
             ui.input_action_button("bs_update_sidebar_badges", "Update sidebar badges"),
             ui.input_action_button("bs_update_navbar_items", "Update navbar items"),
             ui.input_action_button("bs_update_tab_content", "Update tab content"),
+            ui.input_action_button("bs_activate_about", "Activate About"),
             # Demo navbar to be updated
             ui.tags.div(
                 {"id": "demo-navbar", "class": "mt-3"},
@@ -194,6 +196,12 @@ def server(input, output, session):
             update_tab_content(
                 session, "t1", "<p><strong>Updated from server</strong></p>"
             )
+
+    @reactive.Effect
+    def _activate_about():
+        if input.bs_activate_about():
+            # set About active via server helper
+            update_sidebar_active(session, "#about")
 
 
 app = App(app_ui, server)

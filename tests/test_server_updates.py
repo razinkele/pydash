@@ -111,6 +111,25 @@ def test_update_navbar_items_sends_items():
     assert s.args[1]["items"][0]["badge"] == "1"
 
 
+def test_update_sidebar_active_sends_target():
+    from bs4dash_py.server import update_sidebar_active
+
+    class S:
+        def __init__(self):
+            self.called = False
+            self.args = None
+
+        def send_custom_message(self, name, payload):
+            self.called = True
+            self.args = (name, payload)
+
+    s = S()
+    assert update_sidebar_active(s, "#about") is True
+    assert s.called is True
+    assert s.args[0] == "bs4dash_update_sidebar_active"
+    assert s.args[1]["target"] == "#about"
+
+
 def test_update_tab_content_sends_content():
     from bs4dash_py.server import update_tab_content
 
