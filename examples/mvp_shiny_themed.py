@@ -17,9 +17,20 @@ from bs4dash_py import (
 ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
 ADMINLTE_JS = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"
 
-# Read local theme overrides
-css_path = Path(__file__).parent / "assets" / "custom_theme.css"
-custom_css = css_path.read_text() if css_path.exists() else ""
+# Build a Theme programmatically (preferred). This demonstrates the new Theme API
+# and will be rendered into the page head via the `theme_tag` helper.
+from bs4dash_py import Theme, theme_tag
+
+# A small Theme object that mirrors what the previous custom CSS did.
+example_theme = Theme({
+    "bs4dash-avatar-bg": "#1f7a8c",
+    "bs4dash-badge-info-bg": "#ff6b6b",
+    "bs4dash-primary-bg": "#001f3f",
+    "bs4dash-tab-fg": "#000000",
+    "bs4dash-tab-bg": "#ffffff",
+})
+
+style_tag = theme_tag(example_theme)
 
 hdr = navbar_shiny(
     "bs4dash-py Themed MVP",
@@ -79,9 +90,6 @@ control = controlbar_shiny(
     ui.tags.div({"class": "p-3"}, ui.tags.h5("Controlbar"), ui.tags.p("Some settings"))
 )
 
-# Inject custom CSS into the page head so it overrides defaults
-style_tag = ui.tags.style(custom_css) if custom_css else None
-
 page = dashboard_page_shiny(
     header=hdr,
     sidebar=side,
@@ -92,7 +100,7 @@ page = dashboard_page_shiny(
     adminlte_js=ADMINLTE_JS,
 )
 
-# Compose UI with style tag first so overrides apply
+# Ensure theme style is first so it can set CSS variables used by the library
 app_ui = ui.page_fixed(style_tag, page)
 
 
