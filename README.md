@@ -45,7 +45,13 @@ python scripts/vendor_assets.py --bootswatch flatly,cyborg
 # Vendor from local sources
 python scripts/vendor_assets.py --adminlte-local tests/assets/adminlte.min.css --bootswatch-local flatly=tests/stubs/bootswatch_stub.min.css
 ```
+Git LFS (recommended for large assets)
 
+- Large binary assets (e.g., `adminlte.min.css`) are better managed with Git LFS to avoid bloating the repository history.
+- To opt in locally:
+  1. Install Git LFS: `git lfs install`.
+  2. Track files: `git lfs track "src/bs4dash_py/assets/*.min.css"` (this will create/update `.gitattributes`).
+  3. If you need to convert the existing committed file to LFS (rewrites history): `git lfs migrate import --include="src/bs4dash_py/assets/adminlte.min.css"` (use with caution; coordinate with maintainers).
 Tip: In CI set `PYBS4DASH_BOOTSWATCH_SRC=local` and provide local `ADMINLTE` assets to avoid external network dependencies and flaky CDN DNS/blocked requests.
 
 Documentation
