@@ -30,6 +30,53 @@ jobs:
         with:
           name: vendored-assets
           path: vendored-assets.tar.gz
+
+      - name: Commit vendored assets to branch (optional)
+        if: secrets.VENDOR_ASSETS_PUSH == '1'
+        env:
+          VENDOR_PAT: ${{ secrets.VENDOR_ASSETS_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          echo "Committing vendored assets to 'vendored-assets' branch (if changes)"
+          # Setup git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Extract artifact into working dir
+          tar -xzf vendored-assets.tar.gz
+
+          # Use provided PAT if available, otherwise GITHUB_TOKEN
+          TOKEN=${VENDOR_PAT:-$GITHUB_TOKEN}
+          if [ -z "$TOKEN" ]; then
+            echo "No token available to push changes; aborting commit step"; exit 0
+          fi
+
+          # Prepare branch
+          git fetch origin
+          if git show-ref --verify --quiet refs/heads/vendored-assets; then
+            git checkout vendored-assets
+          else
+            git checkout -b vendored-assets
+          fi
+
+          # Copy vendored files into repo tree
+          mkdir -p src/bs4dash_py/assets
+          tar -xzf vendored-assets.tar.gz -C src/bs4dash_py assets
+
+          # Commit and push if changes
+          git add src/bs4dash_py/assets
+          if git diff --staged --quiet; then
+            echo "No changes to vendored assets; nothing to commit"
+          else
+            git commit -m "chore(vendor): update vendored assets from workflow run ${GITHUB_RUN_ID}"
+            # push using token-authenticated remote
+            git remote remove deploy || true
+            REPO=${GITHUB_REPOSITORY}
+            git remote add deploy https://${TOKEN}@github.com/${REPO}.git
+            git push deploy vendored-assets --force
+          fi
+
       - name: Create issue (optional) with artifact link (on schedule)
         if: github.event_name == 'schedule'
         uses: actions/github-script@v6
