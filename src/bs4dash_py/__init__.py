@@ -94,7 +94,7 @@ from .theme import Theme  # noqa: E402
 
 
 def bootswatch_href(*args, **kwargs) -> str:
-    """Return the Bootswatch CDN URL for a given theme name."""
+    """Return the Bootswatch CDN/local URL for a given theme name."""
     return _lazy_import("bootswatch_href", "theme")(*args, **kwargs)
 
 
@@ -104,6 +104,19 @@ def bootswatch_tag(*args, **kwargs) -> Any:
     See `bootswatch_tag` in `bs4dash_py.theme` for details on `as_tag`.
     """
     return _lazy_import("bootswatch_tag", "theme")(*args, **kwargs)
+
+
+# Asset provider registration helpers
+def register_asset_provider(*args, **kwargs):
+    return _lazy_import("register_asset_provider", "theme")(*args, **kwargs)
+
+
+def unregister_asset_provider(*args, **kwargs):
+    return _lazy_import("unregister_asset_provider", "theme")(*args, **kwargs)
+
+
+def resolve_asset(*args, **kwargs):
+    return _lazy_import("resolve_asset", "theme")(*args, **kwargs)
 
 
 def list_vendored_bootswatch(*args, **kwargs) -> list:
