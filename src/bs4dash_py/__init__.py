@@ -78,6 +78,10 @@ def tab_item_shiny(*args, **kwargs):
     return _lazy_import("tab_item_shiny", "shiny_layout")(*args, **kwargs)
 
 
+def theme_tag(*args, **kwargs):
+    return _lazy_import("theme_tag", "theme")(*args, **kwargs)
+
+
 def menu_item_shiny(*args, **kwargs):
     return _lazy_import("menu_item_shiny", "shiny_layout")(*args, **kwargs)
 
@@ -131,6 +135,18 @@ def update_navbar_items(*args, **kwargs):
     return _lazy_import("update_navbar_items", "server")(*args, **kwargs)
 
 
+def add_navbar_item(*args, **kwargs):
+    return _lazy_import("add_navbar_item", "server")(*args, **kwargs)
+
+
+def remove_navbar_item(*args, **kwargs):
+    return _lazy_import("remove_navbar_item", "server")(*args, **kwargs)
+
+
+def update_navbar_badge(*args, **kwargs):
+    return _lazy_import("update_navbar_badge", "server")(*args, **kwargs)
+
+
 def update_tab_content(*args, **kwargs):
     return _lazy_import("update_tab_content", "server")(*args, **kwargs)
 
@@ -152,6 +168,7 @@ __all__ = [
     "info_box_shiny",
     "tabs_shiny",
     "tab_item_shiny",
+    "theme_tag",
     "menu_item_shiny",
     "menu_group_shiny",
     "navbar_item_shiny",
@@ -167,5 +184,8 @@ __all__ = [
     "update_sidebar_badges",
     "update_sidebar_active",
     "update_navbar_items",
+    "add_navbar_item",
+    "remove_navbar_item",
+    "update_navbar_badge",
     "update_tab_content",
 ]
