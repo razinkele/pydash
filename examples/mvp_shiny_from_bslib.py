@@ -1,3 +1,5 @@
+import os
+
 from shiny import App, ui
 
 from bs4dash_py import (
@@ -9,8 +11,15 @@ from bs4dash_py import (
     navbar_shiny,
 )
 
-ADMINLTE = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
-ADMINLTE_JS = "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"
+# Allow overriding AdminLTE assets via environment variables for CI/local vendoring
+ADMINLTE = os.environ.get(
+    "PYBS4DASH_ADMINLTE",
+    "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css",
+)
+ADMINLTE_JS = os.environ.get(
+    "PYBS4DASH_ADMINLTE_JS",
+    "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js",
+)
 
 # Two example bslib-like configurations
 bslib_light = {
@@ -83,11 +92,39 @@ page = dashboard_page_shiny(
     sidebar=side,
     body=content,
     footer=footer_shiny(text="bslib conversion demo"),
-    adminlte_css=ADMINLTE,
-    adminlte_js=ADMINLTE_JS,
+    adminlte_css=ADMINLTE if ADMINLTE.startswith("http") else None,
+    adminlte_js=ADMINLTE_JS if ADMINLTE_JS.startswith("http") else None,
 )
 
-app_ui = ui.page_fixed(style_tag, page, script)
+# If local AdminLTE paths are provided, inline them into the page so tests
+# in CI do not rely on external CDN resolution.
+adminlte_style_tag = None
+adminlte_script_tag = None
+try:
+    if ADMINLTE and os.path.exists(ADMINLTE):
+        admin_css = open(ADMINLTE, "r", encoding="utf-8").read()
+        adminlte_style_tag = ui.tags.style(admin_css, id="adminlte-styles")
+except Exception:
+    adminlte_style_tag = None
+
+try:
+    if ADMINLTE_JS and os.path.exists(ADMINLTE_JS):
+        admin_js = open(ADMINLTE_JS, "r", encoding="utf-8").read()
+        adminlte_script_tag = ui.tags.script(admin_js)
+except Exception:
+    adminlte_script_tag = None
+
+# Compose page; include inlined AdminLTE style/script when available
+components = []
+if adminlte_style_tag:
+    components.append(adminlte_style_tag)
+components.append(style_tag)
+components.append(page)
+if adminlte_script_tag:
+    components.append(adminlte_script_tag)
+components.append(script)
+
+app_ui = ui.page_fixed(*components)
 
 
 def server(input, output, session):

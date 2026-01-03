@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 
-def _start(script_path: str, timeout: int = 60):
+def _start(script_path: str, timeout: int = 60, env_overrides: dict | None = None):
+    import os
     import socket
     import subprocess
     import time
@@ -15,9 +16,14 @@ def _start(script_path: str, timeout: int = 60):
     s.close()
     import sys
 
+    env = os.environ.copy()
+    env["PYBS4DASH_PORT"] = str(port)
+    if env_overrides:
+        env.update(env_overrides)
+
     proc = subprocess.Popen(
         [sys.executable, script_path],
-        env={"PYBS4DASH_PORT": str(port)},
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -41,7 +47,19 @@ def _start(script_path: str, timeout: int = 60):
 def test_bslib_conversion_applies(playwright_page):
     script = Path("examples") / "mvp_shiny_from_bslib.py"
     assert script.exists()
-    port, proc = _start(str(script))
+
+    # Prefer local vendored AdminLTE assets in CI to avoid CDN/DNS flakiness
+    assets_dir = Path(__file__).parent / "assets"
+    css_path = str((assets_dir / "adminlte.min.css").resolve())
+    js_path = str((assets_dir / "adminlte.min.js").resolve())
+
+    port, proc = _start(
+        str(script),
+        env_overrides={
+            "PYBS4DASH_ADMINLTE": css_path,
+            "PYBS4DASH_ADMINLTE_JS": js_path,
+        },
+    )
     page = playwright_page
     page.goto(f"http://127.0.0.1:{port}/", timeout=10000, wait_until="domcontentloaded")
 
