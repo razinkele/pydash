@@ -13,8 +13,10 @@ def _start(script_path: str, timeout: int = 60):
     s.bind(("127.0.0.1", 0))
     port = s.getsockname()[1]
     s.close()
+    import sys
+
     proc = subprocess.Popen(
-        ["python", script_path],
+        [sys.executable, script_path],
         env={"PYBS4DASH_PORT": str(port)},
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -41,7 +43,7 @@ def test_bslib_conversion_applies(playwright_page):
     assert script.exists()
     port, proc = _start(str(script))
     page = playwright_page
-    page.goto(f"http://127.0.0.1:{port}/", timeout=10000)
+    page.goto(f"http://127.0.0.1:{port}/", timeout=10000, wait_until="domcontentloaded")
 
     def primary_bg():
         return page.evaluate(
