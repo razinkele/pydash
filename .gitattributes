@@ -1,6 +1,8 @@
 /src/bs4dash_py/assets/adminlte.min.css filter=lfs diff=lfs merge=lfs -text
 /src/bs4dash_py/assets/adminlte.min.js filter=lfs diff=lfs merge=lfs -text
 /src/bs4dash_py/assets/bootswatch/*/bootstrap.min.css filter=lfs diff=lfs merge=lfs -text
+src/bs4dash_py/assets/*.min.css filter=lfs diff=lfs merge=lfs -text
+src/bs4dash_py/assets/*.min.js filter=lfs diff=lfs merge=lfs -text
+src/bs4dash_py/assets/bootswatch/*/bootstrap.min.css filter=lfs diff=lfs merge=lfs -text
 src/bs4dash_py/assets/adminlte.min.css filter=lfs diff=lfs merge=lfs -text
 src/bs4dash_py/assets/adminlte.min.js filter=lfs diff=lfs merge=lfs -text
-src/bs4dash_py/assets/bootswatch/*/bootstrap.min.css filter=lfs diff=lfs merge=lfs -text
