@@ -162,6 +162,42 @@ jobs:
 
             body += `\n\n---\n**Failure summary:**\n${summary}`;
 
+            // Include short excerpts from artifact folders (server stderr / console / page)
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const ws = process.env.GITHUB_WORKSPACE || '.';
+              const artDir = path.join(ws, 'test-artifacts');
+              if (fs.existsSync(artDir)) {
+                const items = fs.readdirSync(artDir, { withFileTypes: true });
+                const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+                if (dirs.length > 0) {
+                  body += '\n\n**Artifacts excerpts (short):**\n';
+                  for (const d of dirs) {
+                    body += `\n- ${d.replace(/_/g,'::')}\n`;
+                    const folder = path.join(artDir, d);
+                    const candidates = ['server_stderr.txt', 'console.log', 'server_stdout.txt', 'page.html'];
+                    for (const c of candidates) {
+                      const fp = path.join(folder, c);
+                      if (fs.existsSync(fp)) {
+                        try {
+                          const txt = fs.readFileSync(fp, { encoding: 'utf8' });
+                          const lines = txt.split(/\r?\n/).filter(Boolean);
+                          const excerpt = lines.slice(0, 12).join('\n');
+                          body += `\n\`\`\`\nFile: ${c} (excerpt)\n${excerpt}${lines.length > 12 ? '\n... (truncated)' : ''}\n\`\`\`\n`;
+                          break;
+                        } catch (e) {
+                          body += `  - (error reading ${c}: ${e.message})\n`;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              body += `\n\nFailed to extract artifact excerpts: ${e.message}`;
+            }
+
             const pr = context.payload.pull_request?.number;
             if (pr) {
               await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
@@ -282,6 +318,42 @@ jobs:
             }
 
             body += `\n\n---\n**Failure summary:**\n${summary}`;
+
+            // Include short excerpts from artifact folders (server stderr / console / page)
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const ws = process.env.GITHUB_WORKSPACE || '.';
+              const artDir = path.join(ws, 'test-artifacts');
+              if (fs.existsSync(artDir)) {
+                const items = fs.readdirSync(artDir, { withFileTypes: true });
+                const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+                if (dirs.length > 0) {
+                  body += '\n\n**Artifacts excerpts (short):**\n';
+                  for (const d of dirs) {
+                    body += `\n- ${d.replace(/_/g,'::')}\n`;
+                    const folder = path.join(artDir, d);
+                    const candidates = ['server_stderr.txt', 'console.log', 'server_stdout.txt', 'page.html'];
+                    for (const c of candidates) {
+                      const fp = path.join(folder, c);
+                      if (fs.existsSync(fp)) {
+                        try {
+                          const txt = fs.readFileSync(fp, { encoding: 'utf8' });
+                          const lines = txt.split(/\r?\n/).filter(Boolean);
+                          const excerpt = lines.slice(0, 12).join('\n');
+                          body += `\n\`\`\`\nFile: ${c} (excerpt)\n${excerpt}${lines.length > 12 ? '\n... (truncated)' : ''}\n\`\`\`\n`;
+                          break;
+                        } catch (e) {
+                          body += `  - (error reading ${c}: ${e.message})\n`;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              body += `\n\nFailed to extract artifact excerpts: ${e.message}`;
+            }
 
             const pr = context.payload.pull_request?.number;
             if (pr) {
