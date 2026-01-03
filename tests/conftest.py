@@ -40,10 +40,25 @@ def playwright_page(request):
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
+        # set up a HAR capture file to record network activity (will be written
+        # by Playwright when the context closes). We prefer to record to the
+        # artifacts dir so it is easy to upload later if the test fails.
+        har_path = adir / "network.har"
+        context = browser.new_context(record_har_path=str(har_path))
         # start tracing (we'll stop and save if the test fails)
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
+
+        # collect console messages for later inspection
+        console_msgs = []
+
+        def _on_console(msg):
+            try:
+                console_msgs.append(f"{msg.type}: {msg.text}")
+            except Exception:
+                console_msgs.append(f"console:{str(msg)}")
+
+        page.on("console", _on_console)
 
         # register for later use in other fixtures if needed
         request.node._pw_resources = {
@@ -51,6 +66,8 @@ def playwright_page(request):
             "page": page,
             "browser": browser,
             "adir": adir,
+            "console": console_msgs,
+            "har_path": har_path,
         }
 
         try:
@@ -73,6 +90,29 @@ def playwright_page(request):
                     context.tracing.stop(path=str(trace_path))
                 except Exception as e:
                     (adir / "trace_error.txt").write_text(str(e))
+                # write console logs
+                try:
+                    cfile = adir / "console.log"
+                    cfile.write_text("\n".join(console_msgs), encoding="utf-8")
+                except Exception as e:
+                    (adir / "console_error.txt").write_text(str(e))
+                # ensure HAR file exists and note if missing
+                try:
+                    har_file = adir / "network.har"
+                    if not har_file.exists():
+                        # Playwright should write HAR to the path we provided; if not,
+                        # attempt to copy from the path registered on the node
+                        node_har = request.node._pw_resources.get("har_path")
+                        if node_har and Path(node_har).exists():
+                            import shutil
+
+                            shutil.copy(Path(node_har), har_file)
+                        else:
+                            (adir / "har_missing.txt").write_text(
+                                "HAR file not found after test"
+                            )
+                except Exception as e:
+                    (adir / "har_error.txt").write_text(str(e))
             # cleanup
             try:
                 context.close()
