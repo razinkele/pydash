@@ -39,9 +39,40 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-  shiny-tests:
+  playwright-setup:
     runs-on: ubuntu-latest
     needs: test
+    outputs:
+      artifact-name: playwright-browsers
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-playwright-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Playwright and download browsers
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pip install playwright
+          # Download browsers (cached in subsequent runs via artifact)
+          playwright install --with-deps
+      - name: Upload Playwright browsers artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ~/.cache/ms-playwright
+
+  shiny-tests:
+    runs-on: ubuntu-latest
+    needs: [test, playwright-setup]
     strategy:
       matrix:
         python-version: [3.11]
@@ -63,19 +94,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
           pip install shiny
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
+      - name: Download Playwright browsers artifact
+        uses: actions/download-artifact@v3
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-      - name: Install Playwright and browsers
+          name: playwright-browsers
+          path: playwright-browsers
+      - name: Restore Playwright browsers to cache dir
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          cp -r playwright-browsers/* ~/.cache/ms-playwright/
+      - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
           pip install playwright
-          # Playwright will use the cached browser downloads when available
-          playwright install --with-deps
       - name: Run Shiny-dependent tests
         run: pytest -q tests/test_shiny_*.py tests/test_dashboard_page.py -q
       - name: Run Playwright smoke tests (Shiny app)
@@ -83,7 +114,7 @@ jobs:
 
   playwright:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, playwright-setup]
     strategy:
       matrix:
         python-version: [3.11]
@@ -100,20 +131,20 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
+      - name: Download Playwright browsers artifact
+        uses: actions/download-artifact@v3
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-      - name: Install
+          name: playwright-browsers
+          path: playwright-browsers
+      - name: Restore Playwright browsers to cache dir
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          cp -r playwright-browsers/* ~/.cache/ms-playwright/
+      - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
           pip install playwright
-          # Playwright will use the cached browser downloads when available
-          playwright install --with-deps
       - name: Run Playwright visual tests
         run: pytest -q tests/test_visual_*.py -q
 
