@@ -85,6 +85,30 @@ def playwright_page(request):
                         body=b"/* stub */",
                         headers={"Content-Type": "text/css"},
                     )
+                # JS fallback (AdminLTE, bootstrap, etc.)
+                if url.endswith(".js"):
+                    stub = assets_dir / (Path(url).name)
+                    if stub.exists():
+                        return route.fulfill(
+                            status=200,
+                            body=stub.read_bytes(),
+                            headers={"Content-Type": "application/javascript"},
+                        )
+                    # provide a harmless no-op for known UI libs to avoid runtime errors
+                    if any(
+                        k in url
+                        for k in ("adminlte", "bootstrap", "bslib", "bootswatch")
+                    ):
+                        return route.fulfill(
+                            status=200,
+                            body=b"(function(){window.AdminLTE=window.AdminLTE||{};})();",
+                            headers={"Content-Type": "application/javascript"},
+                        )
+                    return route.fulfill(
+                        status=200,
+                        body=b"// stub",
+                        headers={"Content-Type": "application/javascript"},
+                    )
                 # Abort fonts/images to avoid blocking when network is restricted
                 if res_type in ("image", "font"):
                     return route.abort()
