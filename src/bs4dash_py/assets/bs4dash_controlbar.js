@@ -82,6 +82,39 @@
             }catch(e){console.error(e);}
         });
 
+        // Update active sidebar link: payload {target: '#about' or selector}
+        Shiny.addCustomMessageHandler('bs4dash_update_sidebar_active', function(msg){
+            try{
+                var target = msg && msg.target ? msg.target : null;
+                if(!target) return;
+                var nav = document.querySelector('.main-sidebar .nav');
+                if(!nav) return;
+                // Remove existing active classes
+                var actives = nav.querySelectorAll('a.nav-link.active');
+                actives.forEach(function(a){ a.classList.remove('active'); });
+
+                // Determine target anchor
+                var a = null;
+                try{
+                    if(target.indexOf('a.') === 0 || target.indexOf('#') === 0 || target.indexOf('.') === 0){
+                        // treat as selector
+                        a = nav.querySelector(target);
+                    }
+                }catch(e){ a = null; }
+                if(!a){
+                    // treat as href
+                    var sel = "a.nav-link[href='" + target + "']";
+                    a = nav.querySelector(sel);
+                }
+                if(a){
+                    a.classList.add('active');
+                    // Ensure parent list item gets focus/aria if needed
+                    var li = a.closest('li');
+                    if(li) li.classList.add('menu-open');
+                }
+            }catch(e){console.error(e);}
+        });
+
         // Update nav items (replace) with optional badges: payload {nav_id: 'demo', items: [{title, href, badge}]}
         Shiny.addCustomMessageHandler('bs4dash_update_nav_items', function(msg){
             try{

@@ -168,6 +168,18 @@ def update_sidebar_badges(session: Any, badges: list[dict]) -> bool:
     return _send_custom_message(session, "bs4dash_update_sidebar_badges", payload)
 
 
+def update_sidebar_active(session: Any, target: str) -> bool:
+    """Set the active sidebar item on the client.
+
+    - target: either a selector (e.g., "a.nav-link[href='#about']") or an href like
+      "#about" (the client will look up by href if an href string is passed).
+    Example: `update_sidebar_active(session, '#about')` or
+             `update_sidebar_active(session, "a.nav-link[href='#about']")`.
+    """
+    payload = {"target": target}
+    return _send_custom_message(session, "bs4dash_update_sidebar_active", payload)
+
+
 def update_navbar_items(session: Any, nav_id: str, items: list[dict]) -> bool:
     """Replace items in a navbar identified by `nav_id`.
 

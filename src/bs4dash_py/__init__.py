@@ -123,6 +123,10 @@ def update_sidebar_badges(*args, **kwargs):
     return _lazy_import("update_sidebar_badges", "server")(*args, **kwargs)
 
 
+def update_sidebar_active(*args, **kwargs):
+    return _lazy_import("update_sidebar_active", "server")(*args, **kwargs)
+
+
 def update_navbar_items(*args, **kwargs):
     return _lazy_import("update_navbar_items", "server")(*args, **kwargs)
 
@@ -161,6 +165,7 @@ __all__ = [
     "update_sidebar",
     "update_navbar_tabs",
     "update_sidebar_badges",
+    "update_sidebar_active",
     "update_navbar_items",
     "update_tab_content",
 ]
