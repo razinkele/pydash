@@ -1,0 +1,65 @@
+name: Playwright Visual Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-visual-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-playwright-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pip install playwright
+
+      - name: Install Playwright browsers
+        run: |
+          # Install browsers for Playwright; cache will help on subsequent runs
+          playwright install --with-deps
+
+      - name: Verify Playwright browser binary is executable
+        run: |
+          echo "Checking for executable Playwright headless shell..."
+          if find ~/.cache/ms-playwright -type f -name 'chrome-headless-shell*' -executable -print -quit | grep -q .; then
+            echo "Playwright headless shell is executable"
+          else
+            echo "ERROR: Playwright headless shell not executable. Listing candidates:"; find ~/.cache/ms-playwright -type f -name 'chrome-headless-shell*' -print -exec ls -l {} \;; false
+          fi
+
+      - name: Run Playwright visual tests
+        env:
+          # Prefer local vendored assets in CI to avoid CDN/network flakiness
+          PYBS4DASH_BOOTSWATCH_SRC: local
+        run: |
+          pytest -q tests/test_visual_*.py -q
+
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-playwright
+          path: test-artifacts/**
