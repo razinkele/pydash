@@ -168,6 +168,34 @@ jobs:
             } else {
               console.log('Not a pull_request event; skipping PR comment.');
             }
+      - name: Post detected failing tests (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const ws = process.env.GITHUB_WORKSPACE || '.';
+            const artDir = path.join(ws, 'test-artifacts');
+            let body = '🔎 **Detected failing tests (artifact folders):**\n\n';
+            if (fs.existsSync(artDir)) {
+              const items = fs.readdirSync(artDir, { withFileTypes: true });
+              const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+              if (dirs.length > 0) {
+                dirs.forEach(d => { body += `- ${d.replace(/_/g,'::')}\n`; });
+              } else {
+                body += '- (no artifact folders found)\n';
+              }
+              const parts = process.env.GITHUB_REPOSITORY.split('/');
+              const owner = parts[0];
+              const repo = parts[1];
+              const pr = context.payload.pull_request?.number;
+              if (pr) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+              }
+            } else {
+              console.log('No test-artifacts directory in workspace; skipping detected-tests comment.');
+            }
 
   playwright:
     runs-on: ubuntu-latest
@@ -260,6 +288,34 @@ jobs:
               await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
             } else {
               console.log('Not a pull_request event; skipping PR comment.');
+            }
+      - name: Post detected failing tests (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const ws = process.env.GITHUB_WORKSPACE || '.';
+            const artDir = path.join(ws, 'test-artifacts');
+            let body = '🔎 **Detected failing tests (artifact folders):**\n\n';
+            if (fs.existsSync(artDir)) {
+              const items = fs.readdirSync(artDir, { withFileTypes: true });
+              const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+              if (dirs.length > 0) {
+                dirs.forEach(d => { body += `- ${d.replace(/_/g,'::')}\n`; });
+              } else {
+                body += '- (no artifact folders found)\n';
+              }
+              const parts = process.env.GITHUB_REPOSITORY.split('/');
+              const owner = parts[0];
+              const repo = parts[1];
+              const pr = context.payload.pull_request?.number;
+              if (pr) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+              }
+            } else {
+              console.log('No test-artifacts directory in workspace; skipping detected-tests comment.');
             }
 
   packaging:
