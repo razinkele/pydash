@@ -1,0 +1,41 @@
+name: Vendor Assets (periodic)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 * * 1' # weekly on Monday at 03:00 UTC
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Vendor AdminLTE and Bootswatch themes
+        run: |
+          # Vendored set can be customized
+          python scripts/vendor_assets.py --adminlte "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" --adminlte-js "https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js" --bootswatch flatly,cyborg,litera
+      - name: Package vendored assets
+        run: |
+          tar -czf vendored-assets.tar.gz -C src/bs4dash_py assets
+      - name: Upload vendored-assets artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendored-assets
+          path: vendored-assets.tar.gz
+      - name: Create issue (optional) with artifact link (on schedule)
+        if: github.event_name == 'schedule'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const runId = process.env.GITHUB_RUN_ID;
+            const body = `Vendored assets were updated by the scheduled workflow. Download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`;
+            await github.rest.issues.create({ owner, repo, title: 'Vendored assets updated', body });
