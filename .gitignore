@@ -8,5 +8,7 @@ build/
 
 # Test artifacts and vendored large assets (not committed)
 test-artifacts/
+analysis_artifacts/
+artifacts/
 tests/assets/axe.min.js
 tests/assets/
