@@ -5,3 +5,8 @@ dist/
 build/
 *.egg-info
 .DS_Store
+
+# Test artifacts and vendored large assets (not committed)
+test-artifacts/
+tests/assets/axe.min.js
+tests/assets/

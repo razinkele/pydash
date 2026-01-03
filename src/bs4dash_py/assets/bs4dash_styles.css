@@ -9,6 +9,75 @@
   --bs4dash-avatar-sm-font: 12px;
   --bs4dash-avatar-md-font: 14px;
   --bs4dash-avatar-lg-font: 18px;
+
+  /* Navigation / Tabs */
+  --bs4dash-nav-fg: #000000;
+  --bs4dash-nav-bg: #ffffff;
+  --bs4dash-tab-fg: #000000;
+  --bs4dash-tab-bg: #ffffff;
+
+  /* Badge colors (info as example) */
+  --bs4dash-badge-info-bg: #17a2b8;
+  --bs4dash-badge-info-fg: #ffffff;
+
+  /* Primary / status tokens */
+  --bs4dash-primary-bg: #001f3f;
+  --bs4dash-primary-fg: #ffffff;
+  --bs4dash-success-bg: #0b5e2e;
+
+  /* Additional tokens: badges, navbar active state, radii, spacing */
+  --bs4dash-badge-success-bg: #28a745;
+  --bs4dash-badge-success-fg: #ffffff;
+  --bs4dash-nav-active-bg: #e9ecef;
+  --bs4dash-nav-active-fg: #000000;
+  --bs4dash-border-radius: 6px;
+  --bs4dash-radius-sm: 4px;
+  --bs4dash-radius-lg: 8px;
+  --bs4dash-spacing-sm: 0.25rem;
+  --bs4dash-spacing-md: 0.5rem;
+  --bs4dash-spacing-lg: 1rem;
+  --bs4dash-link-weight: 600;
+
+  /* Footer */
+  --bs4dash-footer-bg: #f8f9fa;
+  --bs4dash-footer-fg: #000000;
+}
+
+/* Map tokens to components (kept small and scoped) */
+.navbar .nav-link {
+  color: var(--bs4dash-nav-fg) !important;
+}
+.nav.nav-tabs {
+  background-color: var(--bs4dash-tab-bg) !important;
+}
+.nav.nav-tabs .nav-link {
+  color: var(--bs4dash-tab-fg) !important;
+}
+.nav-link.active, .nav-item .nav-link.active {
+  background-color: var(--bs4dash-nav-active-bg) !important;
+  color: var(--bs4dash-nav-active-fg) !important;
+  border-radius: var(--bs4dash-border-radius) !important;
+}
+.nav-link, .nav-tabs .nav-link {
+  padding: var(--bs4dash-spacing-sm) var(--bs4dash-spacing-md);
+  font-weight: var(--bs4dash-link-weight) !important;
+  border-radius: var(--bs4dash-radius-sm) !important;
+}
+.badge.badge-info {
+  background-color: var(--bs4dash-badge-info-bg) !important;
+  color: var(--bs4dash-badge-info-fg) !important;
+}
+.badge.badge-success {
+  background-color: var(--bs4dash-badge-success-bg) !important;
+  color: var(--bs4dash-badge-success-fg) !important;
+}
+.small-box.bg-primary {
+  background-color: var(--bs4dash-primary-bg) !important;
+  color: var(--bs4dash-primary-fg) !important;
+}
+.main-footer {
+  background-color: var(--bs4dash-footer-bg) !important;
+  color: var(--bs4dash-footer-fg) !important;
 }
 
 .user-avatar-initials {

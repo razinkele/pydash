@@ -1,6 +1,9 @@
 import asyncio
 import inspect
-from typing import Any
+import logging
+from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 """Server-side helpers for sending custom messages to client-side handlers.
 
@@ -14,8 +17,8 @@ Behavior when an async method or awaitable is detected:
   `asyncio.run`.
 - If a running loop exists on the current thread, the coroutine is scheduled
   with `loop.create_task`.
-- If a running loop exists on another thread, the coroutine is scheduled
-  safely with `asyncio.run_coroutine_threadsafe`.
+- If scheduling fails (different thread), `asyncio.run_coroutine_threadsafe`
+  will be attempted as a fallback.
 
 This reduces "coroutine was never awaited" warnings and works across a
 variety of Shiny session implementations.
@@ -51,76 +54,99 @@ def _send_custom_message(session: Any, name: str, payload: dict) -> bool:
         "sendInputMessage",
     ]
 
-    def _maybe_await(res):
-        # If the result is awaitable, try to run or schedule it instead of
-        # letting it leak a coroutine and produce a RuntimeWarning.
+    def _schedule_awaitable(res: Any) -> None:
+        """Schedule or run an awaitable/coroutine in a robust, best-effort way.
+
+        The function attempts scheduling in the following order:
+        1. If there is no running loop, execute the coroutine to completion
+           using `asyncio.run`.
+        2. If a running loop exists on another thread, prefer
+           `asyncio.run_coroutine_threadsafe`.
+        3. If the loop appears to be same-thread, attempt `loop.create_task`.
+        4. Fall back to `asyncio.ensure_future` as a last resort.
+
+        All exceptions are caught and logged at debug level; this function is
+        intentionally conservative to avoid breaking user apps when scheduling
+        fails in uncommon runtime environments.
+        """
         try:
-            if inspect.isawaitable(res):
-                try:
-                    loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    # No running loop, run to completion
-                    asyncio.run(res)
-                else:
-                    # If the loop is running in a different thread, use
-                    # run_coroutine_threadsafe which is thread-safe.
-                    try:
-                        import threading
+            if not inspect.isawaitable(res):
+                return
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # No running loop: execute to completion
+                asyncio.run(res)
+                return
 
-                        if (
-                            getattr(loop, "_thread_id", None) is not None
-                            and getattr(loop, "_thread_id") != threading.get_ident()
-                        ):
-                            asyncio.run_coroutine_threadsafe(res, loop)
-                            return
+            # If the loop appears to be running on a different thread, prefer
+            # the thread-safe scheduling primitive `run_coroutine_threadsafe`.
+            try:
+                import threading
+
+                loop_thread_id = getattr(loop, "_thread_id", None)
+                if (
+                    loop_thread_id is not None
+                    and loop_thread_id != threading.get_ident()
+                ):
+                    try:
+                        asyncio.run_coroutine_threadsafe(res, loop)
+                        return
                     except Exception:
-                        # Fall back to attempting create_task
+                        # Fall through to other scheduling attempts
                         pass
+            except Exception:
+                # Ignore inspection errors and continue
+                pass
 
-                    # Running loop on this thread: schedule as a task
-                    try:
-                        loop.create_task(res)
-                    except Exception:
-                        # Fallbacks if create_task fails
-                        try:
-                            asyncio.run_coroutine_threadsafe(res, loop)
-                        except Exception:
-                            try:
-                                asyncio.ensure_future(res)
-                            except Exception:
-                                pass
+            # Try scheduling on the running loop (same-thread optimistic path)
+            try:
+                loop.create_task(res)
+                return
+            except Exception:
+                # Could be a scheduling failure; try thread-safe scheduling as a fallback
+                try:
+                    asyncio.run_coroutine_threadsafe(res, loop)
+                    return
+                except Exception:
+                    pass
+
+            # Final fallback
+            try:
+                asyncio.ensure_future(res)
+            except Exception:
+                logger.debug("Failed to schedule awaitable", exc_info=True)
         except Exception:
-            # Best-effort: swallow errors to avoid breaking user apps
-            pass
+            # Best-effort: don't let scheduling errors propagate
+            logger.debug("Unexpected error while scheduling awaitable", exc_info=True)
 
     for m in candidates:
         fn = getattr(session, m, None)
         if callable(fn):
             try:
-                # If the method itself is async, call and await/schedule it
+                # If the method itself is async, call and schedule it
                 if inspect.iscoroutinefunction(fn):
                     coro = fn(name, payload)
-                    _maybe_await(coro)
+                    _schedule_awaitable(coro)
                     return True
 
                 # Try (name, payload) signature first
-                res = fn(name, payload)
-                _maybe_await(res)
-                return True
-            except TypeError:
-                # Try a single-dict signature
                 try:
-                    if inspect.iscoroutinefunction(fn):
-                        coro = fn({"type": name, "data": payload})
-                        _maybe_await(coro)
-                    else:
-                        res = fn({"type": name, "data": payload})
-                        _maybe_await(res)
+                    res = fn(name, payload)
+                    _schedule_awaitable(res)
                     return True
-                except Exception:
-                    # give up on this method and try next
-                    continue
+                except TypeError:
+                    # Try a single-dict signature
+                    try:
+                        res = fn({"type": name, "data": payload})
+                        _schedule_awaitable(res)
+                        return True
+                    except Exception:
+                        # give up on this method and try next
+                        continue
             except Exception:
+                # Log at debug level to aid troubleshooting while remaining tolerant
+                logger.debug("Error calling session send method %s", m, exc_info=True)
                 continue
     return False
 
@@ -188,6 +214,36 @@ def update_navbar_items(session: Any, nav_id: str, items: list[dict]) -> bool:
     """
     payload = {"nav_id": nav_id, "items": items}
     return _send_custom_message(session, "bs4dash_update_nav_items", payload)
+
+
+def add_navbar_item(session: Any, nav_id: str, item: dict) -> bool:
+    """Add a single item to a navbar.
+
+    - nav_id: id of the nav container
+    - item: dict with keys like {'title': 'New', 'href': '#new', 'badge': '1'}
+    """
+    payload = {"nav_id": nav_id, "item": item}
+    return _send_custom_message(session, "bs4dash_add_nav_item", payload)
+
+
+def remove_navbar_item(session: Any, nav_id: str, href: str) -> bool:
+    """Remove a navbar item matching the given href from the navbar.
+
+    - href: the href string to match (e.g., '#old')
+    """
+    payload = {"nav_id": nav_id, "href": href}
+    return _send_custom_message(session, "bs4dash_remove_nav_item", payload)
+
+
+def update_navbar_badge(
+    session: Any, nav_id: str, href: str, badge: Optional[str]
+) -> bool:
+    """Update (or remove) a badge on a navbar item.
+
+    - badge: string to set, or None to remove the badge
+    """
+    payload = {"nav_id": nav_id, "href": href, "badge": badge}
+    return _send_custom_message(session, "bs4dash_update_nav_badge", payload)
 
 
 def update_tab_content(session: Any, tab_id: str, content: str) -> bool:
