@@ -1,119 +1,61 @@
-def test_visual_static_navbar_and_sidebar_badges():
-    import os
-    import socket
-    import subprocess
-    import sys
-    import time
+def test_visual_static_navbar_and_sidebar_badges(start_example, playwright_page):
 
     import pytest
 
-    pytest.importorskip("playwright.sync_api")
+    # Use fixtures to start example and obtain a Playwright page which will be
+    # instrumented to capture artifacts on failure.
+    port = start_example
+    page = playwright_page
 
-    # Find a free port
-    s = socket.socket()
-    s.bind(("127.0.0.1", 0))
-    port = s.getsockname()[1]
-    s.close()
+    page.goto(f"http://127.0.0.1:{port}/", timeout=10000)
 
-    env = os.environ.copy()
-    env["PYBS4DASH_PORT"] = str(port)
-
-    proc = subprocess.Popen(
-        [sys.executable, "examples/mvp_shiny.py"],
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+    # Static sidebar badge (About has badge '1')
+    page.wait_for_selector(
+        ".main-sidebar .nav a[href='#about'] .badge",
+        timeout=5000,
     )
+    assert (
+        page.evaluate(
+            "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').textContent"
+        )
+        == "1"
+    )
+    # Accessibility: badge should have an aria-label describing it and include the badge text
+    aria = page.evaluate(
+        "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').getAttribute('aria-label')"
+    )
+    assert aria is not None
+    assert "1" in aria
+    assert "badge" in aria
 
-    try:
-        # Wait for server to be ready (timeout)
-        deadline = time.time() + 30
-        last_err = None
-        while time.time() < deadline:
-            try:
-                import urllib.request
+    # Static navbar badge (Notifications has badge '2')
+    page.wait_for_selector("a.nav-link[href='#notif'] .badge", timeout=5000)
+    assert (
+        page.evaluate(
+            "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').textContent"
+        )
+        == "2"
+    )
+    # Accessibility: navbar badge should have aria-label containing badge text
+    aria_nav = page.evaluate(
+        "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').getAttribute('aria-label')"
+    )
+    assert aria_nav is not None
+    assert "2" in aria_nav
+    assert "badge" in aria_nav
 
-                with urllib.request.urlopen(f"http://127.0.0.1:{port}/") as resp:
-                    _ = resp.read()
-                    break
-            except Exception as e:
-                last_err = e
-                time.sleep(0.5)
-        else:
-            pytest.fail(f"Server did not respond in time: {last_err}")
-
-        from playwright.sync_api import sync_playwright
-
-        try:
-            with sync_playwright() as p:
-                try:
-                    browser = p.chromium.launch(headless=True)
-                except Exception as e:
-                    pytest.skip(f"Playwright browsers not available: {e}")
-                page = browser.new_page()
-
-                page.goto(f"http://127.0.0.1:{port}/", timeout=10000)
-
-                # Static sidebar badge (About has badge '1')
-                page.wait_for_selector(
-                    ".main-sidebar .nav a[href='#about'] .badge",
-                    timeout=5000,
-                )
-                assert (
-                    page.evaluate(
-                        "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').textContent"
-                    )
-                    == "1"
-                )
-                # Accessibility: badge should have an aria-label describing it and include the badge text
-                aria = page.evaluate(
-                    "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').getAttribute('aria-label')"
-                )
-                assert aria is not None
-                assert "1" in aria
-                assert "badge" in aria
-
-                # Static navbar badge (Notifications has badge '2')
-                page.wait_for_selector("a.nav-link[href='#notif'] .badge", timeout=5000)
-                assert (
-                    page.evaluate(
-                        "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').textContent"
-                    )
-                    == "2"
-                )
-                # Accessibility: navbar badge should have aria-label containing badge text
-                aria_nav = page.evaluate(
-                    "() => document.querySelector('a.nav-link[href=\"#notif\"] .badge').getAttribute('aria-label')"
-                )
-                assert aria_nav is not None
-                assert "2" in aria_nav
-                assert "badge" in aria_nav
-
-                # Run an axe-core accessibility audit on the page (inject from CDN).
-                # This is a best-effort audit; failures will surface as test failures with details.
-                page.add_script_tag(
-                    url="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.3/axe.min.js"
-                )
-                axe = page.evaluate(
-                    "async () => { const r = await axe.run(); return {violations: r.violations.map(v=>({id:v.id, impact:v.impact, help:v.help, nodes: v.nodes.map(n=>({html: n.html, target:n.target}))}))}; }"
-                )
-                violations = axe.get("violations") if isinstance(axe, dict) else []
-                if violations:
-                    # Build a compact message with id and help
-                    msg_lines = [
-                        f"{v['id']} ({v.get('impact')}): {v.get('help')}"
-                        for v in violations
-                    ]
-                    pytest.fail(
-                        "Accessibility audit failures:\n" + "\n".join(msg_lines)
-                    )
-
-                browser.close()
-        except Exception as e:
-            pytest.skip(f"Playwright test failed to run: {e}")
-    finally:
-        proc.terminate()
-        try:
-            proc.wait(timeout=5)
-        except Exception:
-            proc.kill()
+    # Run an axe-core accessibility audit on the page (inject from CDN).
+    # This is a best-effort audit; failures will surface as test failures with details.
+    page.add_script_tag(
+        url="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.3/axe.min.js"
+    )
+    axe = page.evaluate(
+        "async () => { const r = await axe.run(); return {violations: r.violations.map(v=>({id:v.id, impact:v.impact, help:v.help, nodes: v.nodes.map(n=>({html: n.html, target:n.target}))}))}; }"
+    )
+    violations = axe.get("violations") if isinstance(axe, dict) else []
+    if violations:
+        # Build a compact message with id and help
+        msg_lines = [
+            f"{v['id']} ({v.get('impact')}): {v.get('help')}" for v in violations
+        ]
+        pytest.fail("Accessibility audit failures:\n" + "\n".join(msg_lines))
