@@ -103,6 +103,8 @@ jobs:
         run: |
           mkdir -p ~/.cache/ms-playwright
           cp -r playwright-browsers/* ~/.cache/ms-playwright/
+          # Fix permissions because zip restore may remove exec bit
+          chmod -R a+rx ~/.cache/ms-playwright || true
       - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
@@ -294,6 +296,8 @@ jobs:
         run: |
           mkdir -p ~/.cache/ms-playwright
           cp -r playwright-browsers/* ~/.cache/ms-playwright/
+          # Fix permissions because zip restore may remove exec bit
+          chmod -R a+rx ~/.cache/ms-playwright || true
       - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
