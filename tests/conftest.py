@@ -73,6 +73,29 @@ def playwright_page(request):
                     )
                 # CSS fallback
                 if url.endswith(".css"):
+                    # Bootswatch / theme CSS
+                    if any(
+                        k in url
+                        for k in ("bootswatch", "bootswatch.com", "bootswatch.org")
+                    ):
+                        stub = assets_dir.parent / "stubs" / "bootswatch_stub.min.css"
+                        if stub.exists():
+                            return route.fulfill(
+                                status=200,
+                                body=stub.read_bytes(),
+                                headers={"Content-Type": "text/css"},
+                            )
+                    # Google Fonts CSS
+                    if any(
+                        k in url for k in ("fonts.googleapis.com", "fonts.gstatic.com")
+                    ):
+                        stub = assets_dir.parent / "stubs" / "google_fonts_stub.css"
+                        if stub.exists():
+                            return route.fulfill(
+                                status=200,
+                                body=stub.read_bytes(),
+                                headers={"Content-Type": "text/css"},
+                            )
                     stub = assets_dir / (Path(url).name)
                     if stub.exists():
                         return route.fulfill(
