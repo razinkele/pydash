@@ -105,6 +105,14 @@ jobs:
           cp -r playwright-browsers/* ~/.cache/ms-playwright/
           # Fix permissions because zip restore may remove exec bit
           chmod -R a+rx ~/.cache/ms-playwright || true
+      - name: Verify Playwright browser binary is executable
+        run: |
+          echo "Checking for executable Playwright headless shell..."
+          if find ~/.cache/ms-playwright -type f -name 'chrome-headless-shell*' -executable -print -quit | grep -q .; then
+            echo "Playwright headless shell is executable"
+          else
+            echo "ERROR: Playwright headless shell not executable. Listing candidates:"; find ~/.cache/ms-playwright -type f -name 'chrome-headless-shell*' -print -exec ls -l {} \;; false
+          fi
       - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
@@ -298,6 +306,14 @@ jobs:
           cp -r playwright-browsers/* ~/.cache/ms-playwright/
           # Fix permissions because zip restore may remove exec bit
           chmod -R a+rx ~/.cache/ms-playwright || true
+      - name: Verify Playwright browser binary is executable
+        run: |
+          echo "Checking for executable Playwright headless shell..."
+          if find ~/.cache/ms-playwright -type f -name 'chrome-headless-shell*' -executable -print -quit | grep -q .; then
+            echo "Playwright headless shell is executable"
+          else
+            echo "ERROR: Playwright headless shell not executable. Listing candidates:"; find ~/.cache/ms-playwright -type f -name 'chrome-headless-shell*' -print -exec ls -l {} \;; false
+          fi
       - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
