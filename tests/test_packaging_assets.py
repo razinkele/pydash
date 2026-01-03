@@ -1,6 +1,7 @@
 import tarfile
 import zipfile
 from pathlib import Path
+
 import pytest
 
 
@@ -19,13 +20,13 @@ def test_assets_in_built_distributions(tmp_path):
     # Check wheel (zip archive)
     with zipfile.ZipFile(str(wheel_path), "r") as zf:
         names = zf.namelist()
-        assert any("bs4dash_controlbar.js" in n for n in names), (
-            f"bs4dash_controlbar.js not found in wheel: {wheel_path}"
-        )
+        assert any(
+            "bs4dash_controlbar.js" in n for n in names
+        ), f"bs4dash_controlbar.js not found in wheel: {wheel_path}"
 
     # Check sdist (tar.gz)
     with tarfile.open(str(sdist_path), "r:gz") as tf:
         names = tf.getnames()
-        assert any("bs4dash_controlbar.js" in n for n in names), (
-            f"bs4dash_controlbar.js not found in sdist: {sdist_path}"
-        )
+        assert any(
+            "bs4dash_controlbar.js" in n for n in names
+        ), f"bs4dash_controlbar.js not found in sdist: {sdist_path}"

@@ -2,8 +2,8 @@ import types
 
 from bs4dash_py.server import (
     _send_controlbar_message,
-    show_controlbar,
     hide_controlbar,
+    show_controlbar,
     toggle_controlbar,
 )
 
@@ -34,10 +34,10 @@ def test_fallback_to_other_signatures():
     called = {}
 
     def send(payload):
-        called['payload'] = payload
+        called["payload"] = payload
 
     s = types.SimpleNamespace(send=send)
     assert _send_controlbar_message(s, "hide") is True
-    assert 'payload' in called
-    assert called['payload'].get('type') == 'bs4dash_controlbar'
-    assert called['payload'].get('data') == {'action': 'hide'}
+    assert "payload" in called
+    assert called["payload"].get("type") == "bs4dash_controlbar"
+    assert called["payload"].get("data") == {"action": "hide"}

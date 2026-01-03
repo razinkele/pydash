@@ -1,9 +1,10 @@
 def test_visual_updates_sidebar_nav_and_tab():
     import os
-    import sys
-    import subprocess
     import socket
+    import subprocess
+    import sys
     import time
+
     import pytest
 
     pytest.importorskip("playwright.sync_api")
@@ -55,28 +56,53 @@ def test_visual_updates_sidebar_nav_and_tab():
 
                 # Ensure the controlbar script is present (either external or inlined)
                 try:
-                    has_script = page.evaluate("() => !!document.querySelector(\"script[src*='bs4dash_controlbar.js']\") || Array.from(document.scripts).some(s=>s.textContent && s.textContent.includes('bs4dash_controlbar'))")
+                    has_script = page.evaluate(
+                        "() => !!document.querySelector(\"script[src*='bs4dash_controlbar.js']\") || Array.from(document.scripts).some(s=>s.textContent && s.textContent.includes('bs4dash_controlbar'))"
+                    )
                     assert has_script
                 except Exception:
                     pytest.fail("bs4dash_controlbar.js was not included on the page")
 
                 # Sidebar badge: ensure absent, then click and wait for badge
-                assert page.evaluate("() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge') === null") is True
+                assert (
+                    page.evaluate(
+                        "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge') === null"
+                    )
+                    is True
+                )
                 page.click("#bs_update_sidebar_badges")
-                page.wait_for_selector(".main-sidebar .nav a[href='#about'] .badge", timeout=5000)
-                assert page.evaluate("() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').textContent") == "9"
+                page.wait_for_selector(
+                    ".main-sidebar .nav a[href='#about'] .badge", timeout=5000
+                )
+                assert (
+                    page.evaluate(
+                        "() => document.querySelector('.main-sidebar .nav a[href=\"#about\"] .badge').textContent"
+                    )
+                    == "9"
+                )
 
                 # Navbar items updated
                 page.click("#bs_update_navbar_items")
-                page.wait_for_function("() => document.querySelectorAll('#demo-navbar ul li').length >= 2", timeout=5000)
+                page.wait_for_function(
+                    "() => document.querySelectorAll('#demo-navbar ul li').length >= 2",
+                    timeout=5000,
+                )
                 # first item has badge
-                assert page.evaluate("() => document.querySelector('#demo-navbar ul li a .badge').textContent") == "1"
+                assert (
+                    page.evaluate(
+                        "() => document.querySelector('#demo-navbar ul li a .badge').textContent"
+                    )
+                    == "1"
+                )
 
                 # Tab content update
                 # switch to tab 1 (click its nav link) then wait for updated content
                 page.click("#example-tabs .nav .nav-link")
                 page.click("#bs_update_tab_content")
-                page.wait_for_function("() => document.getElementById('t1') && document.getElementById('t1').innerText.includes('Updated from server')", timeout=5000)
+                page.wait_for_function(
+                    "() => document.getElementById('t1') && document.getElementById('t1').innerText.includes('Updated from server')",
+                    timeout=5000,
+                )
 
                 browser.close()
         except Exception as e:

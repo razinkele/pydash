@@ -1,6 +1,6 @@
-from typing import Any
 import asyncio
 import inspect
+from typing import Any
 
 """Server-side helpers for sending custom messages to client-side handlers.
 
@@ -67,7 +67,10 @@ def _send_custom_message(session: Any, name: str, payload: dict) -> bool:
                     try:
                         import threading
 
-                        if getattr(loop, "_thread_id", None) is not None and getattr(loop, "_thread_id") != threading.get_ident():
+                        if (
+                            getattr(loop, "_thread_id", None) is not None
+                            and getattr(loop, "_thread_id") != threading.get_ident()
+                        ):
                             asyncio.run_coroutine_threadsafe(res, loop)
                             return
                     except Exception:
@@ -156,8 +159,6 @@ def toggle_controlbar(session: Any) -> bool:
     return _send_controlbar_message(session, "toggle")
 
 
-
-
 def update_sidebar_badges(session: Any, badges: list[dict]) -> bool:
     """Update badges for sidebar links.
 
@@ -165,6 +166,18 @@ def update_sidebar_badges(session: Any, badges: list[dict]) -> bool:
     """
     payload = {"badges": badges}
     return _send_custom_message(session, "bs4dash_update_sidebar_badges", payload)
+
+
+def update_sidebar_active(session: Any, target: str) -> bool:
+    """Set the active sidebar item on the client.
+
+    - target: either a selector (e.g., "a.nav-link[href='#about']") or an href like
+      "#about" (the client will look up by href if an href string is passed).
+    Example: `update_sidebar_active(session, '#about')` or
+             `update_sidebar_active(session, "a.nav-link[href='#about']")`.
+    """
+    payload = {"target": target}
+    return _send_custom_message(session, "bs4dash_update_sidebar_active", payload)
 
 
 def update_navbar_items(session: Any, nav_id: str, items: list[dict]) -> bool:
@@ -185,4 +198,3 @@ def update_tab_content(session: Any, tab_id: str, content: str) -> bool:
     """
     payload = {"tab_id": tab_id, "content": content}
     return _send_custom_message(session, "bs4dash_update_tab_content", payload)
-

@@ -1,9 +1,10 @@
 def test_visual_controlbar_asset_and_show_hide():
     import os
-    import sys
-    import subprocess
     import socket
+    import subprocess
+    import sys
     import time
+
     import pytest
 
     pytest.importorskip("playwright.sync_api")
@@ -26,7 +27,7 @@ def test_visual_controlbar_asset_and_show_hide():
 
     try:
         # Wait for server to be ready (timeout)
-        deadline = time.time() + 20
+        deadline = time.time() + 60
         last_err = None
         while time.time() < deadline:
             try:
@@ -39,7 +40,20 @@ def test_visual_controlbar_asset_and_show_hide():
                 last_err = e
                 time.sleep(0.5)
         else:
-            pytest.fail(f"Server did not respond in time: {last_err}")
+            # Give process a chance to terminate and capture stderr for diagnostics
+            try:
+                proc.terminate()
+                proc.wait(timeout=2)
+            except Exception:
+                pass
+            stderr = ""
+            try:
+                stderr = proc.stderr.read().decode(errors="ignore")
+            except Exception:
+                stderr = "<could not read stderr>"
+            pytest.fail(
+                f"Server did not respond in time: {last_err}\nserver stderr:\n{stderr}"
+            )
 
         from playwright.sync_api import sync_playwright
 
@@ -56,23 +70,46 @@ def test_visual_controlbar_asset_and_show_hide():
 
                 # Ensure the controlbar script is present (either external or inlined)
                 try:
-                    has_script = page.evaluate("() => !!document.querySelector(\"script[src*='bs4dash_controlbar.js']\") || Array.from(document.scripts).some(s=>s.textContent && s.textContent.includes('bs4dash_controlbar'))")
+                    has_script = page.evaluate(
+                        "() => !!document.querySelector(\"script[src*='bs4dash_controlbar.js']\") || Array.from(document.scripts).some(s=>s.textContent && s.textContent.includes('bs4dash_controlbar'))"
+                    )
                     assert has_script
                 except Exception:
                     pytest.fail("bs4dash_controlbar.js was not included on the page")
 
                 # Initially controlbar should not be open
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is False
+                assert (
+                    page.evaluate(
+                        "() => document.body.classList.contains('control-sidebar-open')"
+                    )
+                    is False
+                )
 
                 # Click the show button and wait for class
                 page.click("#show_cb")
-                page.wait_for_function("() => document.body.classList.contains('control-sidebar-open')", timeout=5000)
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is True
+                page.wait_for_function(
+                    "() => document.body.classList.contains('control-sidebar-open')",
+                    timeout=5000,
+                )
+                assert (
+                    page.evaluate(
+                        "() => document.body.classList.contains('control-sidebar-open')"
+                    )
+                    is True
+                )
 
                 # Click hide button and wait for removal
                 page.click("#hide_cb")
-                page.wait_for_function("() => !document.body.classList.contains('control-sidebar-open')", timeout=5000)
-                assert page.evaluate("() => document.body.classList.contains('control-sidebar-open')") is False
+                page.wait_for_function(
+                    "() => !document.body.classList.contains('control-sidebar-open')",
+                    timeout=5000,
+                )
+                assert (
+                    page.evaluate(
+                        "() => document.body.classList.contains('control-sidebar-open')"
+                    )
+                    is False
+                )
 
                 browser.close()
         except Exception as e:

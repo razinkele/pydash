@@ -1,6 +1,6 @@
 def test_create_thumbnail(tmp_path):
     import pytest
-    from pathlib import Path
+
     try:
         from PIL import Image
     except Exception:

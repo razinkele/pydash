@@ -2,15 +2,16 @@ from shiny import App, ui
 
 from bs4dash_py import (
     box_shiny,
+    breadcrumb_shiny,
+    controlbar_shiny,
     dashboard_page_shiny,
+    footer_shiny,
+    info_box_shiny,
     navbar_shiny,
     sidebar_shiny,
-    footer_shiny,
-    controlbar_shiny,
-    value_box_shiny,
-    info_box_shiny,
     tabs_shiny,
-    tab_item_shiny,
+    update_sidebar_active,
+    value_box_shiny,
 )
 
 # CDNs
@@ -21,8 +22,23 @@ hdr = navbar_shiny(
     "bs4dash-py Shiny MVP",
     controlbar_icon=ui.tags.i({"class": "fas fa-th"}),
     right_ui=[
-        {"type": "user", "title": "Alice", "image": "https://via.placeholder.com/32", "items": [("Profile", "#profile"), ("Logout", "#logout")] },
-        {"type": "user", "title": "Bob Jones", "items": [("Profile", "#profile"), ("Logout", "#logout")] },
+        # Notifications shows badge as a dict (colorable)
+        {
+            "title": "Notifications",
+            "href": "#notif",
+            "badge": {"text": "2", "color": "danger"},
+        },
+        {
+            "type": "user",
+            "title": "Alice",
+            "image": "https://via.placeholder.com/32",
+            "items": [("Profile", "#profile"), ("Logout", "#logout")],
+        },
+        {
+            "type": "user",
+            "title": "Bob Jones",
+            "items": [("Profile", "#profile"), ("Logout", "#logout")],
+        },
     ],
 )
 side = sidebar_shiny(
@@ -61,6 +77,14 @@ content = ui.tags.div(
         ),
     ),
     ui.tags.hr(),
+    # Breadcrumb example
+    ui.tags.div(
+        {"class": "row"},
+        ui.tags.div(
+            {"class": "col-12"},
+            breadcrumb_shiny(("Home", "#"), ("Section", "#section"), "Sub"),
+        ),
+    ),
     ui.tags.div(
         {"class": "row"},
         value_box_shiny("42", title="Active", color="primary", width=3),
@@ -71,7 +95,11 @@ content = ui.tags.div(
         {"class": "row mt-3"},
         ui.tags.div(
             {"class": "col-12"},
-            tabs_shiny("example-tabs", ("t1", "Tab 1", ui.tags.p("Tab1 content"), True), ("t2", "Tab 2", ui.tags.p("Tab2 content"))),
+            tabs_shiny(
+                "example-tabs",
+                ("t1", "Tab 1", ui.tags.p("Tab1 content"), True),
+                ("t2", "Tab 2", ui.tags.p("Tab2 content")),
+            ),
         ),
     ),
     ui.tags.hr(),
@@ -83,10 +111,17 @@ content = ui.tags.div(
             ui.input_action_button("bs_update_sidebar_badges", "Update sidebar badges"),
             ui.input_action_button("bs_update_navbar_items", "Update navbar items"),
             ui.input_action_button("bs_update_tab_content", "Update tab content"),
+            ui.input_action_button("bs_activate_about", "Activate About"),
             # Demo navbar to be updated
             ui.tags.div(
                 {"id": "demo-navbar", "class": "mt-3"},
-                ui.tags.ul({"class": "nav"}, ui.tags.li({"class": "nav-item"}, ui.tags.a({"class": "nav-link", "href": "#a"}, "Initial"))),
+                ui.tags.ul(
+                    {"class": "nav"},
+                    ui.tags.li(
+                        {"class": "nav-item"},
+                        ui.tags.a({"class": "nav-link", "href": "#a"}, "Initial"),
+                    ),
+                ),
             ),
         ),
     ),
@@ -119,7 +154,8 @@ app_ui = ui.page_fixed(page)
 def server(input, output, session):
     # Server handlers to demonstrate show/hide controlbar actions
     from shiny import reactive
-    from bs4dash_py import show_controlbar, hide_controlbar
+
+    from bs4dash_py import hide_controlbar, show_controlbar
 
     @reactive.Effect
     def _show_cb_handler():
@@ -134,8 +170,8 @@ def server(input, output, session):
 
     # Dynamic update handlers
     from bs4dash_py import (
-        update_sidebar_badges,
         update_navbar_items,
+        update_sidebar_badges,
         update_tab_content,
     )
 
@@ -157,7 +193,15 @@ def server(input, output, session):
     @reactive.Effect
     def _update_tab_content():
         if input.bs_update_tab_content():
-            update_tab_content(session, "t1", "<p><strong>Updated from server</strong></p>")
+            update_tab_content(
+                session, "t1", "<p><strong>Updated from server</strong></p>"
+            )
+
+    @reactive.Effect
+    def _activate_about():
+        if input.bs_activate_about():
+            # set About active via server helper
+            update_sidebar_active(session, "#about")
 
 
 app = App(app_ui, server)

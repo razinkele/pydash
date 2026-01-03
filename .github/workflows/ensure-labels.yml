@@ -43,10 +43,34 @@ jobs:
             color: '006b75'
             description: 'PR title was auto-fixed by the title bot'
     steps:
-      - name: Create or update label
-        uses: peter-evans/create-or-update-label@v2
+      - name: Create or update label via GitHub Script
+        uses: actions/github-script@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ matrix.name }}
-          color: ${{ matrix.color }}
-          description: ${{ matrix.description }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const name = "${{ matrix.name }}";
+            const color = "${{ matrix.color }}";
+            const description = `{{ matrix.description }}`;
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name,
+                color,
+                description,
+              });
+              core.info(`Created label ${name}`);
+            } catch (err) {
+              if (err.status === 422) {
+                core.info(`Label ${name} exists, updating...`);
+                await github.rest.issues.updateLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  color,
+                  description,
+                });
+              } else {
+                throw err;
+              }
+            }

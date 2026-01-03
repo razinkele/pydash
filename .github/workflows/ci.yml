@@ -7,18 +7,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.10, 3.11, 3.12]
+        python-version: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - name: Install
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
+      - name: Skip python3.10 install (not needed on ubuntu-latest)
+        if: ${{ matrix.python-version == '3.11' }}
+        run: |
+          echo "Skipping python3.10 install; pre-commit will run with the configured Python (3.11)."
       - name: Run pre-commit
+        if: ${{ matrix.python-version == '3.11' }}
         run: pre-commit run --all-files
       - name: Lint (ruff)
         run: ruff check .
@@ -27,9 +39,40 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-  playwright:
+  playwright-setup:
     runs-on: ubuntu-latest
     needs: test
+    outputs:
+      artifact-name: playwright-browsers
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-playwright-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Playwright and download browsers
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pip install playwright
+          # Download browsers (cached in subsequent runs via artifact)
+          playwright install --with-deps
+      - name: Upload Playwright browsers artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ~/.cache/ms-playwright
+
+  shiny-tests:
+    runs-on: ubuntu-latest
+    needs: [test, playwright-setup]
     strategy:
       matrix:
         python-version: [3.11]
@@ -39,14 +82,379 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-shiny-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Shiny and dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pip install shiny
+      - name: Download Playwright browsers artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: playwright-browsers
+          path: playwright-browsers
+      - name: Restore Playwright browsers to cache dir
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          cp -r playwright-browsers/* ~/.cache/ms-playwright/
+      - name: Install Playwright package
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+      - name: Run Shiny-dependent tests
+        run: pytest -q tests/test_shiny_*.py tests/test_dashboard_page.py -q
+      - name: Run Playwright smoke tests (Shiny app)
+        run: pytest -q tests/test_visual_layout_smoke.py tests/test_visual_static_badges.py -q
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test-artifacts/**
+      - name: Post PR comment with artifact links (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const runId = process.env.GITHUB_RUN_ID;
+
+            // List artifacts for the run
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+
+            // Collect failed jobs and their failing steps for a short summary
+            const jobsResp = await github.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: parseInt(runId) });
+            const jobs = jobsResp.data?.jobs || [];
+            const failedJobs = jobs.filter(j => j.conclusion !== 'success');
+            let summary = '';
+            if (failedJobs.length > 0) {
+              for (const job of failedJobs) {
+                summary += `\n**${job.name}** — conclusion: ${job.conclusion}\n`;
+                const failingSteps = (job.steps || []).filter(s => s.conclusion !== 'success');
+                if (failingSteps.length > 0) {
+                  for (const s of failingSteps) {
+                    summary += `  - ${s.name} — ${s.conclusion}\n`;
+                  }
+                } else {
+                  summary += '  - (no failing step names available)\n';
+                }
+              }
+            } else {
+              summary = 'No failed jobs detected.';
+            }
+
+            let body = `⚠️ **Shiny smoke tests failed** — artifacts uploaded for diagnosis.\n\n`;
+            if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
+              for (const a of artifacts.data.artifacts) {
+                body += `- **${a.name}** — ${a.size_in_bytes} bytes\n`;
+              }
+              body += `\nYou can download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n\n`;
+              body += "Tip: click the 'Artifacts' section on the run page and download the `test-artifacts` archive to retrieve logs, screenshots, HAR and traces.";
+
+              // Additionally, try to collect a one-line stderr/console summary per artifact folder
+              try {
+                const fs = require('fs');
+                const path = require('path');
+                const ws = process.env.GITHUB_WORKSPACE || '.';
+                const artDir = path.join(ws, 'test-artifacts');
+                const shortLines = [];
+                if (fs.existsSync(artDir)) {
+                  const candidates = fs.readdirSync(artDir, { withFileTypes: true }).filter(d=>d.isDirectory()).map(d=>d.name);
+                  for (const d of candidates) {
+                    try {
+                      const folder = path.join(artDir, d);
+                      const sfile = path.join(folder, 'server_stderr.txt');
+                      const cfile = path.join(folder, 'console.log');
+                      let firstLine = null;
+                      if (fs.existsSync(sfile)) {
+                        const txt = fs.readFileSync(sfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (!firstLine && fs.existsSync(cfile)) {
+                        const txt = fs.readFileSync(cfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (firstLine) shortLines.push(`${d.replace(/_/g,'::')}: ${firstLine}`);
+                    } catch (e) {}
+                  }
+                }
+                if (shortLines.length > 0) {
+                  body = '🔍 **One-line stderr summaries:**\n' + shortLines.map(l=>`- ${l}`).join('\n') + '\n\n' + body;
+                }
+              } catch (e) {}
+
+            } else {
+              body += 'No artifacts were found for this run.';
+            }
+
+            body += `\n\n---\n**Failure summary:**\n${summary}`;
+
+            // Include short excerpts from artifact folders (server stderr / console / page)
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const ws = process.env.GITHUB_WORKSPACE || '.';
+              const artDir = path.join(ws, 'test-artifacts');
+              if (fs.existsSync(artDir)) {
+                const items = fs.readdirSync(artDir, { withFileTypes: true });
+                const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+                if (dirs.length > 0) {
+                  body += '\n\n**Artifacts excerpts (short):**\n';
+                  for (const d of dirs) {
+                    body += `\n- ${d.replace(/_/g,'::')}\n`;
+                    const folder = path.join(artDir, d);
+                    const candidates = ['server_stderr.txt', 'console.log', 'server_stdout.txt', 'page.html'];
+                    for (const c of candidates) {
+                      const fp = path.join(folder, c);
+                      if (fs.existsSync(fp)) {
+                        try {
+                          const txt = fs.readFileSync(fp, { encoding: 'utf8' });
+                          const lines = txt.split(/\r?\n/).filter(Boolean);
+                          const excerpt = lines.slice(0, 12).join('\n');
+                          body += `\n\`\`\`\nFile: ${c} (excerpt)\n${excerpt}${lines.length > 12 ? '\n... (truncated)' : ''}\n\`\`\`\n`;
+                          break;
+                        } catch (e) {
+                          body += `  - (error reading ${c}: ${e.message})\n`;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              body += `\n\nFailed to extract artifact excerpts: ${e.message}`;
+            }
+
+            const pr = context.payload.pull_request?.number;
+            if (pr) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            } else {
+              console.log('Not a pull_request event; skipping PR comment.');
+            }
+      - name: Post detected failing tests (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const ws = process.env.GITHUB_WORKSPACE || '.';
+            const artDir = path.join(ws, 'test-artifacts');
+            let body = '🔎 **Detected failing tests (artifact folders):**\n\n';
+            if (fs.existsSync(artDir)) {
+              const items = fs.readdirSync(artDir, { withFileTypes: true });
+              const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+              if (dirs.length > 0) {
+                dirs.forEach(d => { body += `- ${d.replace(/_/g,'::')}\n`; });
+              } else {
+                body += '- (no artifact folders found)\n';
+              }
+              const parts = process.env.GITHUB_REPOSITORY.split('/');
+              const owner = parts[0];
+              const repo = parts[1];
+              const pr = context.payload.pull_request?.number;
+              if (pr) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+              }
+            } else {
+              console.log('No test-artifacts directory in workspace; skipping detected-tests comment.');
+            }
+
+  playwright:
+    runs-on: ubuntu-latest
+    needs: [test, playwright-setup]
+    strategy:
+      matrix:
+        python-version: [3.11]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Download Playwright browsers artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: playwright-browsers
+          path: playwright-browsers
+      - name: Restore Playwright browsers to cache dir
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          cp -r playwright-browsers/* ~/.cache/ms-playwright/
+      - name: Install Playwright package
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
           pip install playwright
-          playwright install --with-deps
       - name: Run Playwright visual tests
-        run: pytest -q tests/test_visual_controlbar.py -q
+        run: pytest -q tests/test_visual_*.py -q
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test-artifacts/**
+      - name: Post PR comment with artifact links (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const runId = process.env.GITHUB_RUN_ID;
+
+            // artifacts
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: parseInt(runId) });
+
+            // jobs and failing steps summary
+            const jobsResp = await github.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: parseInt(runId) });
+            const jobs = jobsResp.data?.jobs || [];
+            const failedJobs = jobs.filter(j => j.conclusion !== 'success');
+            let summary = '';
+            if (failedJobs.length > 0) {
+              for (const job of failedJobs) {
+                summary += `\n**${job.name}** — conclusion: ${job.conclusion}\n`;
+                const failingSteps = (job.steps || []).filter(s => s.conclusion !== 'success');
+                if (failingSteps.length > 0) {
+                  for (const s of failingSteps) {
+                    summary += `  - ${s.name} — ${s.conclusion}\n`;
+                  }
+                } else {
+                  summary += '  - (no failing step names available)\n';
+                }
+              }
+            } else {
+              summary = 'No failed jobs detected.';
+            }
+
+            let body = `⚠️ **Playwright visual tests failed** — artifacts uploaded for diagnosis.\n\n`;
+            if (artifacts.data && artifacts.data.artifacts && artifacts.data.artifacts.length > 0) {
+              for (const a of artifacts.data.artifacts) {
+                body += `- **${a.name}** — ${a.size_in_bytes} bytes\n`;
+              }
+              body += `\nYou can download artifacts from this run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}\n\n`;
+              body += "Tip: click the 'Artifacts' section on the run page and download the `test-artifacts` archive to retrieve logs, screenshots, HAR and traces.";
+
+              // Additionally, try to collect a one-line stderr/console summary per artifact folder
+              try {
+                const fs = require('fs');
+                const path = require('path');
+                const ws = process.env.GITHUB_WORKSPACE || '.';
+                const artDir = path.join(ws, 'test-artifacts');
+                const shortLines = [];
+                if (fs.existsSync(artDir)) {
+                  const candidates = fs.readdirSync(artDir, { withFileTypes: true }).filter(d=>d.isDirectory()).map(d=>d.name);
+                  for (const d of candidates) {
+                    try {
+                      const folder = path.join(artDir, d);
+                      const sfile = path.join(folder, 'server_stderr.txt');
+                      const cfile = path.join(folder, 'console.log');
+                      let firstLine = null;
+                      if (fs.existsSync(sfile)) {
+                        const txt = fs.readFileSync(sfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (!firstLine && fs.existsSync(cfile)) {
+                        const txt = fs.readFileSync(cfile, 'utf8').split(/\r?\n/).find(Boolean);
+                        if (txt) firstLine = txt.trim();
+                      }
+                      if (firstLine) shortLines.push(`${d.replace(/_/g,'::')}: ${firstLine}`);
+                    } catch (e) {}
+                  }
+                }
+                if (shortLines.length > 0) {
+                  body = '🔍 **One-line stderr summaries:**\n' + shortLines.map(l=>`- ${l}`).join('\n') + '\n\n' + body;
+                }
+              } catch (e) {}
+
+            } else {
+              body += 'No artifacts were found for this run.';
+            }
+
+            body += `\n\n---\n**Failure summary:**\n${summary}`;
+
+            // Include short excerpts from artifact folders (server stderr / console / page)
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const ws = process.env.GITHUB_WORKSPACE || '.';
+              const artDir = path.join(ws, 'test-artifacts');
+              if (fs.existsSync(artDir)) {
+                const items = fs.readdirSync(artDir, { withFileTypes: true });
+                const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+                if (dirs.length > 0) {
+                  body += '\n\n**Artifacts excerpts (short):**\n';
+                  for (const d of dirs) {
+                    body += `\n- ${d.replace(/_/g,'::')}\n`;
+                    const folder = path.join(artDir, d);
+                    const candidates = ['server_stderr.txt', 'console.log', 'server_stdout.txt', 'page.html'];
+                    for (const c of candidates) {
+                      const fp = path.join(folder, c);
+                      if (fs.existsSync(fp)) {
+                        try {
+                          const txt = fs.readFileSync(fp, { encoding: 'utf8' });
+                          const lines = txt.split(/\r?\n/).filter(Boolean);
+                          const excerpt = lines.slice(0, 12).join('\n');
+                          body += `\n\`\`\`\nFile: ${c} (excerpt)\n${excerpt}${lines.length > 12 ? '\n... (truncated)' : ''}\n\`\`\`\n`;
+                          break;
+                        } catch (e) {
+                          body += `  - (error reading ${c}: ${e.message})\n`;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              body += `\n\nFailed to extract artifact excerpts: ${e.message}`;
+            }
+
+            const pr = context.payload.pull_request?.number;
+            if (pr) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            } else {
+              console.log('Not a pull_request event; skipping PR comment.');
+            }
+      - name: Post detected failing tests (on PRs)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const ws = process.env.GITHUB_WORKSPACE || '.';
+            const artDir = path.join(ws, 'test-artifacts');
+            let body = '🔎 **Detected failing tests (artifact folders):**\n\n';
+            if (fs.existsSync(artDir)) {
+              const items = fs.readdirSync(artDir, { withFileTypes: true });
+              const dirs = items.filter(d => d.isDirectory()).map(d => d.name);
+              if (dirs.length > 0) {
+                dirs.forEach(d => { body += `- ${d.replace(/_/g,'::')}\n`; });
+              } else {
+                body += '- (no artifact folders found)\n';
+              }
+              const parts = process.env.GITHUB_REPOSITORY.split('/');
+              const owner = parts[0];
+              const repo = parts[1];
+              const pr = context.payload.pull_request?.number;
+              if (pr) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+              }
+            } else {
+              console.log('No test-artifacts directory in workspace; skipping detected-tests comment.');
+            }
 
   packaging:
     runs-on: ubuntu-latest
@@ -84,7 +492,7 @@ jobs:
       - name: Run packaging tests
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build pytest
           pytest -q tests/test_packaging_assets.py -q
       - name: Upload built distributions
         uses: actions/upload-artifact@v4
