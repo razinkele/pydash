@@ -113,3 +113,14 @@
 
 /* Small utility spacing used elsewhere */
 .ml-1 { margin-left: .25rem; }
+
+/* Navbar user toggle style (replaces previous inline style) */
+.navbar-user-toggle {
+  color: var(--bs4dash-nav-fg) !important;
+  background: var(--bs4dash-nav-bg) !important;
+  padding: 0.3rem 0.6rem !important;
+  font-weight: 700 !important;
+  font-size: 1.25rem !important;
+  border-radius: var(--bs4dash-border-radius) !important;
+  display: inline-block !important;
+}
